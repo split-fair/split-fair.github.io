@@ -28,16 +28,27 @@ workflows:
         beta_groups:
           - External Testers
 
-  android-apk:
-    name: Split Fair — Android APK
-    max_build_duration: 30
-    instance_type: linux_x2
+  android-release:
+    name: Split Fair — Android Play Store
+    max_build_duration: 60
+    instance_type: mac_mini_m2
     environment:
       flutter: stable
+      android_signing:
+        - split_fair_keystore
+      vars:
+        PACKAGE_NAME: "com.splitfair.rent_split"
     scripts:
       - name: Get Flutter packages
         script: flutter packages pub get
-      - name: Build APK release
-        script: flutter build apk --release
+      - name: Build Android AAB
+        script: |
+          flutter build appbundle --release
     artifacts:
-      - build/app/outputs/flutter-apk/app-release.apk
+      - build/**/outputs/**/*.aab
+      - build/**/outputs/**/mapping.txt
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true
