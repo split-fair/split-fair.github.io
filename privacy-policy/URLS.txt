@@ -2,8 +2,8 @@ Split Fair — App Store Info
 ===========================
 
 PRIVACY POLICY
-Live URL: https://earnest-hummingbird-6fa7cb.netlify.app/
-NOTE: Remove password protection in Netlify dashboard before submitting.
+Live URL: https://splitfair-privacy.netlify.app
+NOTE: No password — public, deployed from GitHub (splitfair-privacy project on Netlify)
 
 GOOGLE PLAY
 Developer Name: Clairmont Labs
