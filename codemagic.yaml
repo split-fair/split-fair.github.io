@@ -10,23 +10,37 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Set up keychain and code signing
+      - name: Initialize keychain
+        script: keychain initialize
+      - name: Fetch signing files
         script: |
-          keychain initialize
           app-store-connect fetch-signing-files \
             com.splitfair.rentSplit \
             --type IOS_APP_STORE \
             --create
+      - name: Get Flutter packages and run project migrations
+        script: |
+          flutter packages pub get
+          flutter build ios --release --no-codesign || true
+      - name: Apply code signing after migrations
+        script: |
           keychain add-certificates
           xcode-project use-profiles
-      - name: Get Flutter packages
-        script: flutter packages pub get
-      - name: Build iOS release
+      - name: Archive and export IPA
         script: |
-          flutter build ipa --release \
-            --export-options-plist=/Users/builder/export_options.plist
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -archivePath $CM_BUILD_DIR/ios/Runner.xcarchive \
+            archive
+          xcodebuild \
+            -exportArchive \
+            -archivePath $CM_BUILD_DIR/ios/Runner.xcarchive \
+            -exportOptionsPlist /Users/builder/export_options.plist \
+            -exportPath $CM_BUILD_DIR/ios/ipa
     artifacts:
-      - build/ios/ipa/*.ipa
+      - $CM_BUILD_DIR/ios/ipa/*.ipa
     publishing:
       app_store_connect:
         auth: integration
