@@ -314,21 +314,51 @@ class _WhyCard extends StatelessWidget {
 
           return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             if (e.key > 0) const Divider(height: 20),
-            Row(children: [
-              Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-              const SizedBox(width: 8),
-              Text(room.tenant, style: Theme.of(context).textTheme.labelLarge),
-              const Spacer(),
-              Text('${e.value.score.toStringAsFixed(0)} pts total',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color)),
-            ]),
-            const SizedBox(height: 6),
-            Row(children: [
-              _PtChip('${sqftPts.toStringAsFixed(0)} sqft', AppColors.textTertiary),
-              const SizedBox(width: 6),
-              if (bonusPts > 0) ...[_PtChip('+${bonusPts.toStringAsFixed(0)} features', AppColors.primary), const SizedBox(width: 6)],
-              _PtChip('+${qualityPts.toStringAsFixed(0)} quality', AppColors.accent),
-            ]),
+            InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                builder: (_) => Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+                  child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.borderMed, borderRadius: BorderRadius.circular(2)))),
+                    const SizedBox(height: 16),
+                    Row(children: [
+                      Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                      const SizedBox(width: 8),
+                      Text(room.tenant, style: Theme.of(context).textTheme.titleMedium),
+                    ]),
+                    const SizedBox(height: 16),
+                    ScoreBreakdown(room: room),
+                    const SizedBox(height: 8),
+                  ]),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                    const SizedBox(width: 8),
+                    Text(room.tenant, style: Theme.of(context).textTheme.labelLarge),
+                    const Spacer(),
+                    Text('${e.value.score.toStringAsFixed(0)} pts total',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color)),
+                    const SizedBox(width: 4),
+                    Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textTertiary),
+                  ]),
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    _PtChip('${sqftPts.toStringAsFixed(0)} sqft', AppColors.textTertiary),
+                    const SizedBox(width: 6),
+                    if (bonusPts > 0) ...[_PtChip('+${bonusPts.toStringAsFixed(0)} features', AppColors.primary), const SizedBox(width: 6)],
+                    _PtChip('+${qualityPts.toStringAsFixed(0)} quality', AppColors.accent),
+                  ]),
+                ]),
+              ),
+            ),
           ]);
         }),
       ]),
