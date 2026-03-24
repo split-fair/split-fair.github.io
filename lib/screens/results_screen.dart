@@ -74,10 +74,7 @@ class ResultsScreen extends StatelessWidget {
   }
 
   void _shareText(BuildContext context, List<SplitResult> results, double total) {
-    SharePlus.instance.share(ShareParams(
-      text: _buildShareText(results, total),
-      subject: 'Fair rent split breakdown',
-    ));
+    Share.share(_buildShareText(results, total), subject: 'Fair rent split breakdown');
   }
 
   void _copyToClipboard(BuildContext context, List<SplitResult> results, double total) {
