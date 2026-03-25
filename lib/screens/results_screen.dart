@@ -135,34 +135,40 @@ class _TotalHeaderState extends State<_TotalHeader> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Hero(
+      tag: 'total_rent_amount',
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColors.primary, AppColors.primaryDark],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Total monthly rent',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withOpacity(0.8))),
+            const SizedBox(height: 6),
+            AnimatedBuilder(
+              animation: _anim,
+              builder: (_, __) {
+                final displayed = widget.total * _anim.value;
+                final formatted = '\$${displayed.toStringAsFixed(2)}';
+                final style = Theme.of(context).textTheme.displayLarge?.copyWith(
+                  color: Colors.white, fontSize: 38, fontWeight: FontWeight.w700);
+                return _RollingHeaderText(text: formatted, style: style!);
+              },
+            ),
+            const SizedBox(height: 4),
+            Text('Split across ${widget.count} rooms',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withOpacity(0.8))),
+          ]),
         ),
-        borderRadius: BorderRadius.circular(20),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Total monthly rent',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withOpacity(0.8))),
-        const SizedBox(height: 6),
-        AnimatedBuilder(
-          animation: _anim,
-          builder: (_, __) {
-            final displayed = widget.total * _anim.value;
-            final formatted = '\$${displayed.toStringAsFixed(2)}';
-            final style = Theme.of(context).textTheme.displayLarge?.copyWith(
-              color: Colors.white, fontSize: 38, fontWeight: FontWeight.w700);
-            return _RollingHeaderText(text: formatted, style: style!);
-          },
-        ),
-        const SizedBox(height: 4),
-        Text('Split across ${widget.count} rooms',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withOpacity(0.8))),
-      ]),
     ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.97, 0.97), end: const Offset(1, 1));
   }
 }

@@ -116,10 +116,16 @@ class HomeScreen extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SectionHeader(label: 'Total monthly rent'),
       const SizedBox(height: 8),
-      Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
-        child: CurrencyField(value: state.totalRent, label: 'Monthly total', onChanged: state.setTotalRent),
+      Hero(
+        tag: 'total_rent_amount',
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+            child: CurrencyField(value: state.totalRent, label: 'Monthly total', onChanged: state.setTotalRent),
+          ),
+        ),
       ),
     ]).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05, end: 0);
   }
@@ -197,7 +203,25 @@ class HomeScreen extends StatelessWidget {
       onPressed: isReady
           ? () {
               FocusScope.of(context).unfocus();
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const ResultsScreen()));
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (_, animation, __) => const ResultsScreen(),
+                  transitionDuration: const Duration(milliseconds: 420),
+                  reverseTransitionDuration: const Duration(milliseconds: 350),
+                  transitionsBuilder: (_, animation, __, child) {
+                    final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+                    return FadeTransition(
+                      opacity: curved,
+                      child: SlideTransition(
+                        position: Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero)
+                            .animate(curved),
+                        child: child,
+                      ),
+                    );
+                  },
+                ),
+              );
             }
           : null,
       child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -757,6 +781,11 @@ class _RoomTile extends StatelessWidget {
           ),
         ),
       ),
+    ).animate().fadeIn(duration: 300.ms).scale(
+      begin: const Offset(0.94, 0.94),
+      end: const Offset(1.0, 1.0),
+      duration: 380.ms,
+      curve: Curves.elasticOut,
     );
   }
 }

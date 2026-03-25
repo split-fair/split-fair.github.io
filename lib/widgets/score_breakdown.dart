@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../models/room.dart';
 import '../theme/app_theme.dart';
 
@@ -61,13 +62,18 @@ class _ScoreBreakdownState extends State<ScoreBreakdown> {
         const SizedBox(height: 12),
         const Divider(height: 1, color: Color(0xFFB2DDD1)),
         const SizedBox(height: 10),
-        ...items.map((item) => _ScoreRow(label: item.$1, pts: item.$2)),
+        ...items.asMap().entries.map((e) => _ScoreRow(
+          label: e.value.$1,
+          pts: e.value.$2,
+          totalScore: score,
+          delay: e.key * 40,
+        )),
         const SizedBox(height: 8),
         Text('Higher score = higher share of total rent',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontSize: 11, color: AppColors.primaryDark.withOpacity(0.65))),
       ]),
-    );
+    ).animate().fadeIn(duration: 250.ms).slideY(begin: 0.04, end: 0);
   }
 
   static List<(String, double)> _buildItemsFor(Room room) {
@@ -92,18 +98,39 @@ class _ScoreBreakdownState extends State<ScoreBreakdown> {
 class _ScoreRow extends StatelessWidget {
   final String label;
   final double pts;
-  const _ScoreRow({required this.label, required this.pts});
+  final double totalScore;
+  final int delay;
+  const _ScoreRow({required this.label, required this.pts, required this.totalScore, this.delay = 0});
 
   @override
   Widget build(BuildContext context) {
+    final fraction = totalScore > 0 ? (pts / totalScore).clamp(0.0, 1.0) : 0.0;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(children: [
-        Expanded(child: Text(label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontSize: 12, color: AppColors.primaryDark.withOpacity(0.85)))),
-        Text('+${pts % 1 == 0 ? pts.toInt() : pts.toStringAsFixed(1)} pts',
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryDark)),
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Expanded(child: Text(label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontSize: 12, color: AppColors.primaryDark.withOpacity(0.85)))),
+          Text('+${pts % 1 == 0 ? pts.toInt() : pts.toStringAsFixed(1)} pts',
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryDark)),
+        ]),
+        const SizedBox(height: 3),
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: fraction),
+          duration: Duration(milliseconds: 500 + delay),
+          curve: Curves.easeOutCubic,
+          builder: (_, value, __) => ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: Stack(children: [
+              Container(height: 4, color: AppColors.primary.withOpacity(0.12)),
+              FractionallySizedBox(
+                widthFactor: value,
+                child: Container(height: 4, decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.6), borderRadius: BorderRadius.circular(3))),
+              ),
+            ]),
+          ),
+        ),
       ]),
     );
   }

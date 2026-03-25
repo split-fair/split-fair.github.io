@@ -205,8 +205,13 @@ class _AmountCardState extends State<AmountCard> with SingleTickerProviderStateM
               return _RollingAmountText(text: formatted, style: style!, color: widget.color);
             },
           ),
-          Text('${(widget.percentage * 100).toStringAsFixed(1)}%',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textTertiary)),
+          AnimatedBuilder(
+            animation: _anim,
+            builder: (_, __) => Text(
+              '${(widget.percentage * 100 * _anim.value).toStringAsFixed(1)}%',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textTertiary),
+            ),
+          ),
         ]),
       ]),
     );
