@@ -20,8 +20,9 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AppState>(
       builder: (context, state, _) {
+        final c = AppColorTheme.of(context);
         return Scaffold(
-          backgroundColor: AppColors.surfaceVariant,
+          backgroundColor: c.surfaceVariant,
           body: CustomScrollView(
             slivers: [
               _buildAppBar(context, state),
@@ -33,7 +34,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildAddressInput(context, state),
                     const SizedBox(height: 12),
-                    _CommunalSpaceCard(state: state),
+                    _CommunalSqftCard(state: state),
                     const SizedBox(height: 24),
                     _buildRoomsList(context, state),
                     const SizedBox(height: 16),
@@ -52,35 +53,41 @@ class HomeScreen extends StatelessWidget {
   }
 
   SliverAppBar _buildAppBar(BuildContext context, AppState state) {
+    final c = AppColorTheme.of(context);
     return SliverAppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: c.surface,
       pinned: true,
       expandedHeight: 180,
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.only(left: 20, bottom: 6),
         // Firefly home_bg shows as a subtle background behind the app bar text.
-        // A gradient fade-to-white at the bottom keeps the title always legible.
-        background: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(
-              AppImages.homeBg,
-              fit: BoxFit.cover,
-              alignment: Alignment.topCenter,
-              errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.surface),
-            ),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, AppColors.surface],
-                  stops: [0.35, 1.0],
+        // A gradient fade-to-surface at the bottom keeps the title always legible.
+        background: Builder(
+          builder: (ctx) {
+            final bg = AppColorTheme.of(ctx);
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  AppImages.homeBg,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                  errorBuilder: (_, __, ___) => ColoredBox(color: bg.surface),
                 ),
-              ),
-            ),
-          ],
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, bg.surface],
+                      stops: const [0.35, 1.0],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
         title: Column(
           mainAxisSize: MainAxisSize.min,
@@ -93,6 +100,19 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       actions: [
+        // Theme toggle
+        IconButton(
+          onPressed: () {
+            final appState = context.read<AppState>();
+            final next = appState.themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+            appState.setThemeMode(next);
+          },
+          icon: Icon(
+            state.themeMode == ThemeMode.dark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+            size: 22,
+          ),
+          tooltip: 'Toggle theme',
+        ),
         IconButton(
           onPressed: () => showModalBottomSheet(
             context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
@@ -113,6 +133,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildRentInput(BuildContext context, AppState state) {
+    final c = AppColorTheme.of(context);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SectionHeader(label: 'Total monthly rent'),
       const SizedBox(height: 8),
@@ -122,7 +143,7 @@ class HomeScreen extends StatelessWidget {
           color: Colors.transparent,
           child: Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: c.border)),
             child: CurrencyField(value: state.totalRent, label: 'Monthly total', onChanged: state.setTotalRent),
           ),
         ),
@@ -139,12 +160,13 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildRoomsList(BuildContext context, AppState state) {
+    final c = AppColorTheme.of(context);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       SectionHeader(
         label: '${state.rooms.length} rooms',
         trailing: IconButton(
           onPressed: () => _showScoringExplainer(context),
-          icon: const Icon(Icons.info_outline_rounded, size: 18, color: AppColors.textTertiary),
+          icon: Icon(Icons.info_outline_rounded, size: 18, color: c.textTertiary),
           tooltip: 'How scoring works',
           visualDensity: VisualDensity.compact,
           padding: EdgeInsets.zero,
@@ -169,7 +191,6 @@ class HomeScreen extends StatelessWidget {
               child: _RoomTile(
                 room: room, color: color, index: i,
                 onEdit: () => _openRoomEdit(context, state, room.id),
-                onDelete: canDelete ? () => state.removeRoom(room.id) : null,
               ),
             ),
           );
@@ -177,10 +198,10 @@ class HomeScreen extends StatelessWidget {
       ),
       const SizedBox(height: 6),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        const Icon(Icons.swipe_left_rounded, size: 13, color: AppColors.textTertiary),
+        Icon(Icons.swipe_left_rounded, size: 13, color: c.textTertiary),
         const SizedBox(width: 4),
         Text('Swipe to remove  ·  Hold & drag to reorder',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 11, color: AppColors.textTertiary)),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 11, color: c.textTertiary)),
       ]),
     ]);
   }
@@ -262,6 +283,7 @@ class HomeScreen extends StatelessWidget {
         onSaveAllCommunal: (shares) => state.updateAllCommunalShares(shares),
         communalEnabled: state.communalEnabled,
         communalSqft: state.communalSqft,
+        totalAptSqft: state.totalAptSqft,
         allRooms: state.rooms,
       ),
     );
@@ -272,29 +294,32 @@ class HomeScreen extends StatelessWidget {
     if (!context.mounted) return;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(children: [
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.balance_rounded, size: 18, color: AppColors.primary),
-          ),
-          const SizedBox(width: 12),
-          const Text('Split Fair'),
-        ]),
-        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Version ${info.version} (${info.buildNumber})',
-            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-          const SizedBox(height: 12),
-          const Text('Fair rent splitting — weighted by room size, features, and quality.', style: TextStyle(fontSize: 14)),
-          const SizedBox(height: 12),
-          const Text('© 2025 Split Fair', style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
-        ],
-      ),
+      builder: (ctx) {
+        final c = AppColorTheme.of(ctx);
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(children: [
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(color: c.primaryLight, borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.balance_rounded, size: 18, color: AppColors.primary),
+            ),
+            const SizedBox(width: 12),
+            const Text('Split Fair'),
+          ]),
+          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Version ${info.version} (${info.buildNumber})',
+              style: TextStyle(fontSize: 13, color: c.textSecondary)),
+            const SizedBox(height: 12),
+            const Text('Fair rent splitting — weighted by room size, features, and quality.', style: TextStyle(fontSize: 14)),
+            const SizedBox(height: 12),
+            Text('© 2025 Split Fair', style: TextStyle(fontSize: 12, color: c.textTertiary)),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+          ],
+        );
+      },
     );
   }
 
@@ -335,17 +360,18 @@ class _ScoringExplainerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColorTheme.of(context);
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.borderMed, borderRadius: BorderRadius.circular(2))),
+        Container(width: 40, height: 4, decoration: BoxDecoration(color: c.borderMed, borderRadius: BorderRadius.circular(2))),
         const SizedBox(height: 20),
         Row(children: [
-          Container(width: 36, height: 36, decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(10)),
+          Container(width: 36, height: 36, decoration: BoxDecoration(color: c.primaryLight, borderRadius: BorderRadius.circular(10)),
             child: const Icon(Icons.calculate_rounded, size: 18, color: AppColors.primary)),
           const SizedBox(width: 12),
           Text('How scoring works', style: Theme.of(context).textTheme.titleLarge),
@@ -355,7 +381,7 @@ class _ScoringExplainerSheet extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 16),
         Container(
-          decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: c.surfaceVariant, borderRadius: BorderRadius.circular(14), border: Border.all(color: c.border)),
           child: Column(children: _rows.asMap().entries.map((e) {
             final isLast = e.key == _rows.length - 1;
             return Column(children: [
@@ -373,9 +399,9 @@ class _ScoringExplainerSheet extends StatelessWidget {
         const SizedBox(height: 14),
         Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: c.primaryLight, borderRadius: BorderRadius.circular(12)),
           child: Text('Example: 180 sqft + private bath = 180 + 40 = 220 pts. If total is 400 pts, this room pays 55% of rent.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.primaryDark, fontSize: 13)),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: c.primaryOnLight, fontSize: 13)),
         ),
         const SizedBox(height: 20),
         ElevatedButton(
@@ -440,7 +466,7 @@ class _AddressFieldState extends State<_AddressField> {
         ),
         onChanged: widget.onChanged,
       ),
-      optionsViewBuilder: (_, onSelected, options) => Align(
+      optionsViewBuilder: (ctx, onSelected, options) => Align(
         alignment: Alignment.topLeft,
         child: Material(
           elevation: 4,
@@ -455,7 +481,7 @@ class _AddressFieldState extends State<_AddressField> {
                 final s = options.elementAt(i);
                 return ListTile(
                   dense: true,
-                  leading: const Icon(Icons.history_rounded, size: 16, color: AppColors.textTertiary),
+                  leading: Icon(Icons.history_rounded, size: 16, color: AppColorTheme.of(ctx).textTertiary),
                   title: Text(s, style: const TextStyle(fontSize: 14)),
                   onTap: () => onSelected(s),
                 );
@@ -468,16 +494,16 @@ class _AddressFieldState extends State<_AddressField> {
   }
 }
 
-// ─── Communal Space Card ─────────────────────────────────────────────────────
+// ─── Communal Space Sqft Card ────────────────────────────────────────────────
 
-class _CommunalSpaceCard extends StatefulWidget {
+class _CommunalSqftCard extends StatefulWidget {
   final AppState state;
-  const _CommunalSpaceCard({required this.state});
+  const _CommunalSqftCard({required this.state});
   @override
-  State<_CommunalSpaceCard> createState() => _CommunalSpaceCardState();
+  State<_CommunalSqftCard> createState() => _CommunalSqftCardState();
 }
 
-class _CommunalSpaceCardState extends State<_CommunalSpaceCard> {
+class _CommunalSqftCardState extends State<_CommunalSqftCard> {
   late final TextEditingController _ctrl;
 
   @override
@@ -488,110 +514,70 @@ class _CommunalSpaceCardState extends State<_CommunalSpaceCard> {
   }
 
   @override
+  void didUpdateWidget(_CommunalSqftCard old) {
+    super.didUpdateWidget(old);
+    if (widget.state.totalAptSqft != old.state.totalAptSqft) {
+      final text = widget.state.totalAptSqft > 0
+          ? widget.state.totalAptSqft.toInt().toString()
+          : '';
+      if (_ctrl.text != text) _ctrl.text = text;
+    }
+  }
+
+  @override
   void dispose() { _ctrl.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
-    final state = widget.state;
-    final enabled = state.communalEnabled;
-    final communal = state.communalSqft;
+    final c = AppColorTheme.of(context);
+    final communal = widget.state.communalSqft;
 
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeInOut,
-      child: Container(
-        decoration: BoxDecoration(
-          color: enabled ? AppColors.primaryLight : AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: enabled ? AppColors.primary.withOpacity(0.3) : AppColors.border),
-        ),
-        child: Column(
-          children: [
-            // Toggle row
-            InkWell(
-              onTap: () => state.setCommunalEnabled(!enabled),
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                child: Row(children: [
-                  Container(
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(
-                      color: enabled ? AppColors.primary : AppColors.surfaceVariant,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.house_rounded, size: 18,
-                      color: enabled ? Colors.white : AppColors.textTertiary),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Itemize communal space', style: Theme.of(context).textTheme.titleMedium),
-                      Text('Assign each room\'s access in the room editor',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12)),
-                    ]),
-                  ),
-                  Switch(
-                    value: enabled,
-                    onChanged: state.setCommunalEnabled,
-                    activeColor: AppColors.primary,
-                  ),
-                ]),
-              ),
-            ),
-            // Expanded content when enabled
-            if (enabled) ...[
-              const Divider(height: 1, indent: 16, endIndent: 16),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  TextFormField(
-                    controller: _ctrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Total apartment sqft',
-                      hintText: 'e.g. 1200',
-                      suffixText: 'sqft',
-                    ),
-                    onChanged: (v) {
-                      final parsed = double.tryParse(v);
-                      state.setTotalAptSqft(parsed ?? 0);
-                    },
-                  ),
-                  if (communal > 0) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(children: [
-                        const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.primary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '${communal.toInt()} sqft of shared areas — set each room\'s access share using the slider in the room editor',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontSize: 12, color: AppColors.primaryDark),
-                          ),
-                        ),
-                      ]),
-                    ),
-                  ] else if (state.totalAptSqft > 0) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      'Total sqft must be greater than the sum of all rooms.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 12, color: AppColors.error),
-                    ),
-                  ],
-                ]),
-              ),
-            ],
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.border),
       ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        TextFormField(
+          controller: _ctrl,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: const InputDecoration(
+            labelText: 'Total home square footage',
+            hintText: 'e.g. 1200',
+            suffixText: 'sqft',
+            prefixIcon: Icon(Icons.house_rounded, size: 20),
+          ),
+          onChanged: (v) {
+            final parsed = double.tryParse(v) ?? 0;
+            widget.state.setTotalAptSqft(parsed);
+            widget.state.setCommunalEnabled(parsed > 0);
+          },
+        ),
+        if (communal > 0) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(children: [
+              const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${communal.toInt()} sqft of shared areas — set each room\'s communal space access share using the slider in the room editor',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 12, color: c.primaryOnLight),
+                ),
+              ),
+            ]),
+          ),
+        ],
+      ]),
     ).animate().fadeIn(duration: 300.ms, delay: 35.ms).slideY(begin: 0.05, end: 0);
   }
 }
@@ -645,6 +631,12 @@ class _SwipeDeleteWrapperState extends State<_SwipeDeleteWrapper>
     final pastThreshold = -_offsetX > width * 0.35;
     final fastFling = d.velocity.pixelsPerSecond.dx < -700;
 
+    // Sync the animation controller to where the finger actually is.
+    // Without this, animateTo() starts from _anim.value (still 0 from last
+    // snap-back), not from _offsetX, causing the card to visually jump back
+    // to center before sliding off.
+    _anim.value = _offsetX;
+
     if (pastThreshold || fastFling) {
       HapticFeedback.mediumImpact();
       _anim.animateTo(
@@ -688,7 +680,7 @@ class _SwipeDeleteWrapperState extends State<_SwipeDeleteWrapper>
                   colors: [
                     Colors.transparent,
                     AppColors.error.withValues(alpha: (progress * 0.55).clamp(0.0, 0.55)),
-                    AppColors.error.withValues(alpha: (0.4 + progress * 0.6).clamp(0.0, 1.0)),
+                    AppColors.error.withValues(alpha: (progress * 1.0).clamp(0.0, 1.0)),
                   ],
                   stops: [
                     (0.45 - progress * 0.2).clamp(0.0, 1.0),
@@ -744,14 +736,14 @@ class _RoomTile extends StatelessWidget {
   final Color color;
   final int index;
   final VoidCallback onEdit;
-  final VoidCallback? onDelete;
-  const _RoomTile({super.key, required this.room, required this.color, required this.index, required this.onEdit, this.onDelete});
+  const _RoomTile({super.key, required this.room, required this.color, required this.index, required this.onEdit});
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColorTheme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: c.border)),
       child: Material(
         color: Colors.transparent, borderRadius: BorderRadius.circular(16),
         child: InkWell(
@@ -772,11 +764,9 @@ class _RoomTile extends StatelessWidget {
                   Text(room.name, style: Theme.of(context).textTheme.bodyMedium),
                   const Text(' · '),
                   Text('${room.sqft.toInt()} sqft', style: Theme.of(context).textTheme.bodyMedium),
-                  if (room.hasPrivateBath) ...[const Text(' · '), const Icon(Icons.bathtub_rounded, size: 12, color: AppColors.textTertiary)],
+                  if (room.hasPrivateBath) ...[const Text(' · '), Icon(Icons.bathtub_rounded, size: 12, color: c.textTertiary)],
                 ]),
               ])),
-              if (onDelete != null)
-                IconButton(onPressed: onDelete, icon: Icon(Icons.remove_circle_outline_rounded, size: 20, color: AppColors.error.withOpacity(0.7))),
             ]),
           ),
         ),
