@@ -570,7 +570,7 @@ class _CommunalSpaceCardState extends State<_CommunalSpaceCard> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            '${communal.toInt()} sqft of shared areas — set each room\'s access share using the slider in the room editor',
+                            '${communal.toInt()} sqft shared space. If access isn\'t equal, adjust roommate access in the room editor.',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontSize: 12, color: AppColors.primaryDark),
                           ),
