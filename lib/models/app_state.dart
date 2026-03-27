@@ -16,8 +16,8 @@ const _kIapConfigsKey = 'iap_configs_unlocked';
 const _kAddressKey = 'saved_address';
 const _kConfigsKey = 'saved_configs';
 const _kRecentAddressesKey = 'recent_addresses';
-const _kCommunalEnabledKey = 'communal_enabled';
 const _kTotalAptSqftKey = 'total_apt_sqft';
+const _kSavedResultsKey = 'saved_results_v1';
 
 // ─── Saved Configuration ─────────────────────────────────────────────────────
 
@@ -55,6 +55,51 @@ class SavedConfig {
       (jsonDecode(source) as List).map((e) => SavedConfig.fromJson(e)).toList();
 }
 
+// ─── Saved Result (auto-saved on every Calculate) ────────────────────────────
+
+class SavedResult {
+  final String id;
+  final String address;
+  final double totalRent;
+  final List<Room> rooms;
+  final List<double> amounts;
+  final List<double> percentages;
+  final DateTime savedAt;
+
+  SavedResult({
+    required this.id,
+    required this.address,
+    required this.totalRent,
+    required this.rooms,
+    required this.amounts,
+    required this.percentages,
+    required this.savedAt,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id, 'address': address, 'totalRent': totalRent,
+    'rooms': rooms.map((r) => r.toJson()).toList(),
+    'amounts': amounts, 'percentages': percentages,
+    'savedAt': savedAt.toIso8601String(),
+  };
+
+  factory SavedResult.fromJson(Map<String, dynamic> json) => SavedResult(
+    id: json['id'],
+    address: json['address'] ?? '',
+    totalRent: (json['totalRent'] as num).toDouble(),
+    rooms: (json['rooms'] as List).map((r) => Room.fromJson(r as Map<String, dynamic>)).toList(),
+    amounts: (json['amounts'] as List).map((v) => (v as num).toDouble()).toList(),
+    percentages: (json['percentages'] as List).map((v) => (v as num).toDouble()).toList(),
+    savedAt: DateTime.parse(json['savedAt'] as String),
+  );
+
+  static String encodeList(List<SavedResult> list) =>
+      jsonEncode(list.map((r) => r.toJson()).toList());
+
+  static List<SavedResult> decodeList(String source) =>
+      (jsonDecode(source) as List).map((e) => SavedResult.fromJson(e as Map<String, dynamic>)).toList();
+}
+
 // ─── AppState ────────────────────────────────────────────────────────────────
 
 class AppState extends ChangeNotifier {
@@ -67,8 +112,8 @@ class AppState extends ChangeNotifier {
   bool _loaded = false;
   String _address = '';
   List<SavedConfig> _savedConfigs = [];
+  List<SavedResult> _savedResults = [];
   List<String> _recentAddresses = [];
-  bool _communalEnabled = false;
   double _totalAptSqft = 0;
 
   List<Room> get rooms => _rooms;
@@ -78,13 +123,14 @@ class AppState extends ChangeNotifier {
   bool get loaded => _loaded;
   String get address => _address;
   List<SavedConfig> get savedConfigs => List.unmodifiable(_savedConfigs);
+  List<SavedResult> get savedResults => List.unmodifiable(_savedResults);
   List<String> get recentAddresses => List.unmodifiable(_recentAddresses);
-  bool get communalEnabled => _communalEnabled;
+  bool get communalEnabled => _totalAptSqft > 0;
   double get totalAptSqft => _totalAptSqft;
 
   /// Sqft of shared areas (living room, kitchen, etc). Zero if disabled or not set.
   double get communalSqft {
-    if (!_communalEnabled || _totalAptSqft <= 0 || _rooms.isEmpty) return 0;
+    if (_totalAptSqft <= 0 || _rooms.isEmpty) return 0;
     final roomTotal = _rooms.fold(0.0, (sum, r) => sum + r.sqft);
     final communal = _totalAptSqft - roomTotal;
     return communal > 0 ? communal : 0;
@@ -97,7 +143,7 @@ class AppState extends ChangeNotifier {
   /// Communal sqft allocated to a specific room, based on its communalSharePct.
   /// Normalizes shares across all rooms so they always add up to communalSqft total.
   double communalSqftForRoom(Room room) {
-    if (!_communalEnabled || communalSqft <= 0 || _rooms.isEmpty) return 0;
+    if (communalSqft <= 0 || _rooms.isEmpty) return 0;
     final equalShare = 100.0 / _rooms.length;
     final totalShares = _rooms.fold(0.0, (sum, r) => sum + (r.communalSharePct ?? equalShare));
     if (totalShares <= 0) return communalSqft / _rooms.length;
@@ -136,12 +182,15 @@ class AppState extends ChangeNotifier {
     _iapUnlocked = prefs.getBool(_kIapKey) ?? false;
     _iapConfigsUnlocked = prefs.getBool(_kIapConfigsKey) ?? false;
     _address = prefs.getString(_kAddressKey) ?? '';
-    _communalEnabled = prefs.getBool(_kCommunalEnabledKey) ?? false;
     _totalAptSqft = prefs.getDouble(_kTotalAptSqftKey) ?? 0;
     final recentsJson = prefs.getString(_kRecentAddressesKey);
     if (recentsJson != null) _recentAddresses = List<String>.from(jsonDecode(recentsJson) as List);
     final configsJson = prefs.getString(_kConfigsKey);
     if (configsJson != null) _savedConfigs = SavedConfig.decodeList(configsJson);
+    final resultsJson = prefs.getString(_kSavedResultsKey);
+    if (resultsJson != null) {
+      try { _savedResults = SavedResult.decodeList(resultsJson); } catch (_) {}
+    }
     _loaded = true;
     notifyListeners();
   }
@@ -151,7 +200,6 @@ class AppState extends ChangeNotifier {
     await prefs.setString(_kRoomsKey, Room.encodeList(_rooms));
     await prefs.setDouble(_kRentKey, _totalRent);
     await prefs.setString(_kAddressKey, _address);
-    await prefs.setBool(_kCommunalEnabledKey, _communalEnabled);
     await prefs.setDouble(_kTotalAptSqftKey, _totalAptSqft);
   }
 
@@ -161,7 +209,6 @@ class AppState extends ChangeNotifier {
   }
 
   void setTotalRent(double rent) { _totalRent = rent; notifyListeners(); _save(); }
-  void setCommunalEnabled(bool v) { _communalEnabled = v; notifyListeners(); _save(); }
   void setTotalAptSqft(double v) { _totalAptSqft = v; notifyListeners(); _save(); }
   void setAddress(String a) {
     _address = a;
@@ -227,6 +274,50 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ─── Saved Results (auto-saved on every Calculate) ──────────────────────────
+
+  Future<void> _saveResults() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kSavedResultsKey, SavedResult.encodeList(_savedResults));
+  }
+
+  void autoSaveResult() {
+    final currentResults = results;
+    if (currentResults.isEmpty) return;
+    final addr = _address.trim().isEmpty
+        ? 'Calc ${DateTime.now().month}/${DateTime.now().day}'
+        : _address.trim();
+    // Overwrite existing entry with same address (case-insensitive)
+    _savedResults.removeWhere((r) => r.address.toLowerCase() == addr.toLowerCase());
+    _savedResults.insert(0, SavedResult(
+      id: _uuid.v4(),
+      address: addr,
+      totalRent: _totalRent,
+      rooms: List.from(_rooms),
+      amounts: currentResults.map((r) => r.amount).toList(),
+      percentages: currentResults.map((r) => r.percentage).toList(),
+      savedAt: DateTime.now(),
+    ));
+    notifyListeners();
+    _saveResults();
+  }
+
+  void loadResult(String id) {
+    final result = _savedResults.where((r) => r.id == id).firstOrNull;
+    if (result == null) return;
+    _rooms = List.from(result.rooms);
+    _totalRent = result.totalRent;
+    _address = result.address;
+    notifyListeners();
+    _save();
+  }
+
+  void deleteResult(String id) {
+    _savedResults.removeWhere((r) => r.id == id);
+    notifyListeners();
+    _saveResults();
+  }
+
   // ─── Saved Configurations ───────────────────────────────────────────────────
 
   void saveCurrentConfig(String name) {
@@ -267,7 +358,6 @@ class AppState extends ChangeNotifier {
     ];
     _totalRent = 2500;
     _address = '';
-    _communalEnabled = false;
     _totalAptSqft = 0;
     notifyListeners(); _save();
   }

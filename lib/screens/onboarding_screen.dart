@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+import '../models/app_state.dart';
+import '../models/room.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
 
@@ -121,12 +126,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _controller = PageController();
   int _page = 0;
 
+  // ── Data collected during onboarding ──────────────────────────────────────
+  final _totalRentCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
+  final _totalSqftCtrl = TextEditingController();
+  int _numRooms = 2;
+  final List<TextEditingController> _roomSqftCtrls = [
+    TextEditingController(),
+    TextEditingController(),
+  ];
+  bool _communalEqual = true;
+  List<double> _communalPcts = [50.0, 50.0]; // per-room communal share %
+
+  void _setNumRooms(int n) {
+    setState(() {
+      _numRooms = n;
+      while (_roomSqftCtrls.length < n) _roomSqftCtrls.add(TextEditingController());
+      while (_roomSqftCtrls.length > n) _roomSqftCtrls.removeLast().dispose();
+      _communalPcts = List.generate(n, (_) => 100.0 / n);
+    });
+  }
+
+  void _setCommunalPct(int roomIndex, double value) {
+    setState(() {
+      _communalPcts[roomIndex] = value;
+      final remaining = (100.0 - value).clamp(0.0, 100.0);
+      final others = _numRooms - 1;
+      for (var i = 0; i < _numRooms; i++) {
+        if (i != roomIndex) _communalPcts[i] = others > 0 ? remaining / others : 0;
+      }
+    });
+  }
+
   void _next() {
     if (_page < _slides.length - 1) {
-      _controller.nextPage(
-        duration: const Duration(milliseconds: 380),
-        curve: Curves.easeInOut,
-      );
+      _controller.nextPage(duration: const Duration(milliseconds: 380), curve: Curves.easeInOut);
     } else {
       _finish();
     }
@@ -134,22 +168,340 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _finish() async {
     await markOnboardingDone();
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const HomeScreen(),
-          transitionsBuilder: (_, anim, __, child) =>
-              FadeTransition(opacity: anim, child: child),
-          transitionDuration: const Duration(milliseconds: 400),
-        ),
+    if (!mounted) return;
+    final state = context.read<AppState>();
+
+    // Save rent if entered
+    final rent = double.tryParse(_totalRentCtrl.text.replaceAll(',', '')) ?? 0;
+    if (rent > 0) state.setTotalRent(rent);
+
+    // Save address if entered
+    final addr = _addressCtrl.text.trim();
+    if (addr.isNotEmpty) state.setAddress(addr);
+
+    // Save total sqft if entered
+    final sqft = double.tryParse(_totalSqftCtrl.text) ?? 0;
+    if (sqft > 0) state.setTotalAptSqft(sqft);
+
+    // Always apply _numRooms regardless of whether sqft was entered
+    final uuid = const Uuid();
+    final roomSqfts = _roomSqftCtrls.map((c) => double.tryParse(c.text) ?? 0).toList();
+    final newRooms = List.generate(_numRooms, (i) {
+      final s = i < roomSqfts.length ? roomSqfts[i] : 0.0;
+      return Room(
+        id: uuid.v4(),
+        name: 'Room ${i + 1}',
+        tenant: 'Roommate ${i + 1}',
+        sqft: s > 0 ? s : 150,
       );
+    });
+    // Update/add rooms to match _numRooms
+    for (var i = 0; i < newRooms.length; i++) {
+      if (i < state.rooms.length) {
+        state.updateRoom(state.rooms[i].id, newRooms[i]);
+      } else {
+        state.addRoom();
+        state.updateRoom(state.rooms.last.id, newRooms[i]);
+      }
     }
+    // Remove extra rooms if user chose fewer
+    while (state.rooms.length > _numRooms && state.rooms.length > 2) {
+      state.removeRoom(state.rooms.last.id);
+    }
+
+    // Apply custom communal shares if user opted in
+    if (!_communalEqual) {
+      final idToSharePct = <String, double>{};
+      for (var i = 0; i < state.rooms.length && i < _communalPcts.length; i++) {
+        idToSharePct[state.rooms[i].id] = _communalPcts[i];
+      }
+      state.updateAllCommunalShares(idToSharePct);
+    }
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const HomeScreen(),
+        transitionsBuilder: (_, anim, __, child) => FadeTransition(opacity: anim, child: child),
+        transitionDuration: const Duration(milliseconds: 400),
+      ),
+    );
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _totalRentCtrl.dispose();
+    _addressCtrl.dispose();
+    _totalSqftCtrl.dispose();
+    for (final c in _roomSqftCtrls) c.dispose();
     super.dispose();
+  }
+
+  Widget _buildInteractiveSlide(int index) {
+    switch (index) {
+      case 1: // Rent + address + total sqft
+        return _InteractiveSlidePage(
+          icon: Icons.square_foot_rounded,
+          iconColor: const Color(0xFF378ADD),
+          headline: 'Size Matters',
+          subhead: 'Tell us about the place you\'re splitting.',
+          body: 'We\'ll use this to figure out how much is "shared" vs how much each person actually controls. That gap is where fair rent lives.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Animated label
+              const Text('↓ Start here', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary))
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .fadeIn(duration: 600.ms)
+                .then()
+                .fadeOut(duration: 600.ms),
+              const SizedBox(height: 6),
+              // Total Rent — big & bold with pulsing glow
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.primary, width: 2),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  children: [
+                    const Text('\$', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _totalRentCtrl,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        textAlign: TextAlign.center,
+                        autofocus: true,
+                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.primary),
+                        decoration: const InputDecoration(
+                          hintText: '2,500',
+                          hintStyle: TextStyle(fontSize: 32, fontWeight: FontWeight.w300, color: AppColors.border),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ),
+                    const Text('/mo', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+                  ],
+                ),
+              )
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scaleXY(begin: 1.0, end: 1.018, duration: 900.ms, curve: Curves.easeInOut),
+              const SizedBox(height: 6),
+              const Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Text('Total monthly rent', style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+              ),
+              const SizedBox(height: 16),
+              // Total Sqft
+              TextFormField(
+                controller: _totalSqftCtrl,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: '1,200',
+                  suffixText: 'sqft',
+                  labelText: 'Total apartment size',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Address (optional)
+              TextFormField(
+                controller: _addressCtrl,
+                keyboardType: TextInputType.streetAddress,
+                textCapitalization: TextCapitalization.words,
+                style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: '123 Main St, Apt 4B',
+                  labelText: 'Property address (optional)',
+                  prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+      case 2: // Num rooms
+        return _InteractiveSlidePage(
+          icon: Icons.bedroom_parent_rounded,
+          iconColor: const Color(0xFF7F77DD),
+          headline: 'How Many Rooms?',
+          subhead: 'How many bedrooms are you splitting?',
+          body: 'Bedrooms only — we\'re splitting rent, not staging Cribs.\n\nDon\'t count bathrooms, closets, or the "flex space" your landlord called a bedroom but is clearly a repurposed pantry.',
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                onPressed: _numRooms > 2 ? () => _setNumRooms(_numRooms - 1) : null,
+                icon: const Icon(Icons.remove_circle_rounded, size: 36),
+                color: AppColors.primary,
+                disabledColor: AppColors.border,
+              ),
+              const SizedBox(width: 24),
+              Text(
+                '$_numRooms',
+                style: const TextStyle(fontSize: 56, fontWeight: FontWeight.w800, color: AppColors.primary),
+              ),
+              const SizedBox(width: 24),
+              IconButton(
+                onPressed: _numRooms < 8 ? () => _setNumRooms(_numRooms + 1) : null,
+                icon: const Icon(Icons.add_circle_rounded, size: 36),
+                color: AppColors.primary,
+                disabledColor: AppColors.border,
+              ),
+            ],
+          ),
+        );
+
+      case 3: // Room sqfts
+        return _InteractiveSlidePage(
+          icon: Icons.straighten_rounded,
+          iconColor: AppColors.accent,
+          headline: "Each Room's Size",
+          subhead: 'Square footage of each bedroom (skip if unknown)',
+          body: 'Got a tape measure? Now\'s the time.\n\nSkip any you\'re not sure about — you can fill them in later. Guessing is also fine. Chad\'s been guessing his whole life.',
+          child: Column(
+            children: [
+              // "I don't know it" skip pill
+              GestureDetector(
+                onTap: _next,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border, width: 1.5),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.help_outline_rounded, size: 18, color: AppColors.textTertiary),
+                      SizedBox(width: 8),
+                      Text("I don't know it", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+                    ],
+                  ),
+                ),
+              ),
+              ...List.generate(_numRooms, (i) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: TextFormField(
+                  controller: _roomSqftCtrls[i],
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    labelText: 'Room ${i + 1}',
+                    suffixText: 'sqft',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                    ),
+                  ),
+                ),
+              )),
+            ],
+          ),
+        );
+
+      case 4: // Communal equal
+        return _InteractiveSlidePage(
+          icon: Icons.people_rounded,
+          iconColor: AppColors.primary,
+          headline: 'Shared Spaces',
+          subhead: 'Does everyone have equal access to the living room, kitchen, and common areas?',
+          body: 'If someone has claimed the kitchen or living room as their personal territory, that\'s worth factoring in.\n\nEqual access = everyone pays the same share of communal sqft.',
+          child: Column(
+            children: [
+              _ChoiceButton(
+                label: 'Yes — split equally',
+                icon: Icons.check_circle_rounded,
+                selected: _communalEqual,
+                onTap: () => setState(() => _communalEqual = true),
+              ),
+              const SizedBox(height: 12),
+              _ChoiceButton(
+                label: "No — I'll customize per room",
+                icon: Icons.tune_rounded,
+                selected: !_communalEqual,
+                onTap: () => setState(() => _communalEqual = false),
+              ),
+              if (!_communalEqual) ...[
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 8),
+                Text(
+                  'Drag to set each room\'s share of communal space:',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 12),
+                ...List.generate(_numRooms, (i) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Room ${i + 1}',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                          Text('${_communalPcts[i].round()}%',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                        ],
+                      ),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 4,
+                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
+                          activeTrackColor: AppColors.primary,
+                          thumbColor: AppColors.primary,
+                          overlayColor: AppColors.primaryLight,
+                          inactiveTrackColor: AppColors.border,
+                        ),
+                        child: Slider(
+                          value: _communalPcts[i].clamp(0.0, 100.0),
+                          min: 0,
+                          max: 100,
+                          divisions: 20,
+                          onChanged: (v) => _setCommunalPct(i, v),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+                const SizedBox(height: 4),
+                Text(
+                  'Other rooms adjust automatically to keep total at 100%',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                ),
+              ],
+            ],
+          ),
+        );
+
+      default:
+        return _SlidePage(slide: _slides[index], isActive: index == _page);
+    }
   }
 
   @override
@@ -169,14 +521,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 padding: const EdgeInsets.only(top: 12, right: 16),
                 child: TextButton(
                   onPressed: _finish,
-                  child: const Text(
-                    'Skip',
-                    style: TextStyle(
-                      color: AppColors.textTertiary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  child: const Text('Skip', style: TextStyle(color: AppColors.textTertiary, fontSize: 14, fontWeight: FontWeight.w500)),
                 ),
               ),
             ),
@@ -187,10 +532,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 controller: _controller,
                 onPageChanged: (i) => setState(() => _page = i),
                 itemCount: _slides.length,
-                itemBuilder: (_, index) => _SlidePage(
-                  slide: _slides[index],
-                  isActive: index == _page,
-                ),
+                itemBuilder: (_, index) {
+                  if (index == 0) return _SlidePage(slide: _slides[index], isActive: index == _page);
+                  return _buildInteractiveSlide(index);
+                },
               ),
             ),
 
@@ -221,13 +566,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     decoration: BoxDecoration(
                       color: slide.accent,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: slide.accent.withOpacity(0.30),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
+                      boxShadow: [BoxShadow(color: slide.accent.withOpacity(0.30), blurRadius: 16, offset: const Offset(0, 6))],
                     ),
                     child: Material(
                       color: Colors.transparent,
@@ -242,11 +581,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             child: Text(
                               isLast ? "Let's settle this" : 'Next',
                               key: ValueKey(isLast),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                             ),
                           ),
                         ),
@@ -258,6 +593,98 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Interactive slide page ───────────────────────────────────────────────────
+
+class _InteractiveSlidePage extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String headline;
+  final String subhead;
+  final String? body;
+  final Widget child;
+  const _InteractiveSlidePage({
+    required this.icon,
+    required this.iconColor,
+    required this.headline,
+    required this.subhead,
+    this.body,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(28, 16, 28, 16),
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 44, color: iconColor),
+          ),
+          const SizedBox(height: 28),
+          Text(headline,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          const SizedBox(height: 10),
+          Text(subhead,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.5)),
+          if (body != null) ...[
+            const SizedBox(height: 10),
+            Text(body!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13.5, color: AppColors.textTertiary, height: 1.6)),
+          ],
+          const SizedBox(height: 28),
+          child,
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Choice button (for communal slide) ──────────────────────────────────────
+
+class _ChoiceButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ChoiceButton({required this.label, required this.icon, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primaryLight : AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: selected ? 2 : 1),
+        ),
+        child: Row(children: [
+          Icon(icon, color: selected ? AppColors.primary : AppColors.textTertiary, size: 22),
+          const SizedBox(width: 14),
+          Expanded(child: Text(label,
+            style: TextStyle(fontSize: 15, fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              color: selected ? AppColors.primaryDark : AppColors.textPrimary))),
+          if (selected) const Icon(Icons.check_rounded, color: AppColors.primary, size: 20),
+        ]),
       ),
     );
   }

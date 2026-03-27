@@ -13,8 +13,18 @@ import 'room_edit_sheet.dart';
 import 'results_screen.dart';
 import 'saved_configs_sheet.dart';
 
-class HomeScreen extends StatelessWidget {
+// ─── Shell with bottom nav ────────────────────────────────────────────────────
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+
+  void _onTabTap(int index) => setState(() => _selectedIndex = index);
 
   @override
   Widget build(BuildContext context) {
@@ -22,32 +32,82 @@ class HomeScreen extends StatelessWidget {
       builder: (context, state, _) {
         return Scaffold(
           backgroundColor: AppColors.surfaceVariant,
-          body: CustomScrollView(
-            slivers: [
-              _buildAppBar(context, state),
-              SliverPadding(
-                padding: const EdgeInsets.all(20),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    _buildRentInput(context, state),
-                    const SizedBox(height: 12),
-                    _buildAddressInput(context, state),
-                    const SizedBox(height: 12),
-                    _CommunalSpaceCard(state: state),
-                    const SizedBox(height: 24),
-                    _buildRoomsList(context, state),
-                    const SizedBox(height: 16),
-                    _buildAddRoomButton(context, state),
-                    const SizedBox(height: 24),
-                    _buildCalculateButton(context, state),
-                    const SizedBox(height: 40),
-                  ]),
-                ),
-              ),
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: [
+              _SplitFairTab(state: state),
+              _SavedTab(state: state, onLoaded: () => _onTabTap(0)),
+              _SettingsTab(state: state),
             ],
+          ),
+          bottomNavigationBar: Container(
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
+            ),
+            child: BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: _onTabTap,
+              selectedItemColor: AppColors.primary,
+              unselectedItemColor: AppColors.textTertiary,
+              backgroundColor: AppColors.surface,
+              type: BottomNavigationBarType.fixed,
+              selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+              unselectedLabelStyle: const TextStyle(fontSize: 11),
+              elevation: 0,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_rounded),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.bookmark_rounded),
+                  label: 'Saved',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.settings_rounded),
+                  label: 'Settings',
+                ),
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+}
+
+// ─── Tab 0: Split Fair ────────────────────────────────────────────────────────
+
+class _SplitFairTab extends StatelessWidget {
+  final AppState state;
+  const _SplitFairTab({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.surfaceVariant,
+      body: CustomScrollView(
+        slivers: [
+          _buildAppBar(context, state),
+          SliverPadding(
+            padding: const EdgeInsets.all(20),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildRentInput(context, state),
+                const SizedBox(height: 12),
+                _buildAddressInput(context, state),
+                const SizedBox(height: 24),
+                _buildRoomsList(context, state),
+                const SizedBox(height: 16),
+                _buildAddRoomButton(context, state),
+                const SizedBox(height: 24),
+                _buildCalculateButton(context, state),
+                const SizedBox(height: 40),
+              ]),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -59,8 +119,6 @@ class HomeScreen extends StatelessWidget {
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.only(left: 20, bottom: 6),
-        // Firefly home_bg shows as a subtle background behind the app bar text.
-        // A gradient fade-to-white at the bottom keeps the title always legible.
         background: Stack(
           fit: StackFit.expand,
           children: [
@@ -106,7 +164,6 @@ class HomeScreen extends StatelessWidget {
           tooltip: 'Saved configs',
         ),
         IconButton(onPressed: () => _showResetDialog(context, state), icon: const Icon(Icons.refresh_rounded, size: 22)),
-        IconButton(onPressed: () => _showAbout(context), icon: const Icon(Icons.info_outline_rounded, size: 22), tooltip: 'About'),
         const SizedBox(width: 4),
       ],
     );
@@ -116,16 +173,10 @@ class HomeScreen extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SectionHeader(label: 'Total monthly rent'),
       const SizedBox(height: 8),
-      Hero(
-        tag: 'total_rent_amount',
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
-            child: CurrencyField(value: state.totalRent, label: 'Monthly total', onChanged: state.setTotalRent),
-          ),
-        ),
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+        child: CurrencyField(value: state.totalRent, label: 'Monthly total', onChanged: state.setTotalRent),
       ),
     ]).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05, end: 0);
   }
@@ -234,7 +285,7 @@ class HomeScreen extends StatelessWidget {
       return btn
           .animate(onPlay: (c) => c.repeat(reverse: true))
           .shimmer(duration: 2200.ms, color: Colors.white.withOpacity(0.18), angle: 30)
-          .animate()  // chained: run once on build
+          .animate()
           .fadeIn(duration: 400.ms, delay: 150.ms)
           .slideY(begin: 0.05, end: 0);
     }
@@ -259,9 +310,238 @@ class HomeScreen extends StatelessWidget {
         room: room,
         onSave: (updated) => state.updateRoom(roomId, updated),
         onSaveAllCommunal: (shares) => state.updateAllCommunalShares(shares),
-        communalEnabled: state.communalEnabled,
+        communalEnabled: true,
         communalSqft: state.communalSqft,
         allRooms: state.rooms,
+        totalAptSqft: state.totalAptSqft,
+        onSetTotalAptSqft: state.setTotalAptSqft,
+      ),
+    );
+  }
+
+  void _showResetDialog(BuildContext context, AppState state) {
+    showDialog(context: context, builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Reset everything?'),
+      content: const Text('This will clear all rooms and start fresh.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: () { state.reset(); Navigator.pop(ctx); },
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, minimumSize: const Size(80, 40)),
+          child: const Text('Reset'),
+        ),
+      ],
+    ));
+  }
+}
+
+// ─── Tab 1: Saved results ─────────────────────────────────────────────────────
+
+class _SavedTab extends StatelessWidget {
+  final AppState state;
+  final VoidCallback onLoaded;
+  const _SavedTab({required this.state, required this.onLoaded});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.surfaceVariant,
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        title: const Text('Saved Splits', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Text('Auto-saved on calculate', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary, fontSize: 11)),
+          ),
+        ],
+      ),
+      body: ChangeNotifierProvider.value(
+        value: state,
+        child: _SavedResultsBody(onLoaded: onLoaded),
+      ),
+    );
+  }
+}
+
+class _SavedResultsBody extends StatelessWidget {
+  final VoidCallback onLoaded;
+  const _SavedResultsBody({required this.onLoaded});
+
+  void _load(BuildContext context, AppState state, String id, String address) {
+    state.loadResult(id);
+    onLoaded();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Loaded "$address"')));
+  }
+
+  void _delete(BuildContext context, AppState state, String id, String address) {
+    showDialog(context: context, builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Delete saved split?'),
+      content: Text('Remove "$address"?'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: () { state.deleteResult(id); Navigator.pop(ctx); },
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, minimumSize: const Size(80, 40)),
+          child: const Text('Delete'),
+        ),
+      ],
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final results = state.savedResults;
+
+    if (results.isEmpty) {
+      return Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.calculate_outlined, size: 56, color: AppColors.border),
+          const SizedBox(height: 16),
+          const Text('No saved splits yet', style: TextStyle(fontSize: 16, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 6),
+          const Text('Hit "Calculate fair split" on the Home tab\nto auto-save your first result.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: AppColors.textTertiary, height: 1.5)),
+        ]),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(20),
+      itemCount: results.length,
+      itemBuilder: (context, i) {
+        final r = results[i];
+        final dateStr = '${r.savedAt.month}/${r.savedAt.day}/${r.savedAt.year}';
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
+              child: Row(children: [
+                Container(
+                  width: 38, height: 38,
+                  decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.home_rounded, size: 20, color: AppColors.primary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(r.address, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  Text('\$${r.totalRent.toStringAsFixed(0)}/mo · ${r.rooms.length} rooms · $dateStr',
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                ])),
+                IconButton(
+                  icon: const Icon(Icons.upload_rounded, size: 20),
+                  color: AppColors.primary,
+                  tooltip: 'Load into calculator',
+                  onPressed: () => _load(context, state, r.id, r.address),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                  color: AppColors.textTertiary,
+                  onPressed: () => _delete(context, state, r.id, r.address),
+                ),
+              ]),
+            ),
+            // Per-room amounts
+            const Divider(height: 1, indent: 16, endIndent: 16),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: List.generate(r.rooms.length, (j) {
+                  final color = AppColors.roomColors[j % AppColors.roomColors.length];
+                  final amount = j < r.amounts.length ? r.amounts[j] : 0.0;
+                  final pct = j < r.percentages.length ? r.percentages[j] : 0.0;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: color.withOpacity(0.25)),
+                    ),
+                    child: Text(
+                      '${r.rooms[j].tenant}  \$${amount.toStringAsFixed(0)}  (${(pct * 100).toStringAsFixed(0)}%)',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ]),
+        ).animate().fadeIn(duration: 280.ms, delay: (i * 40).ms).slideY(begin: 0.04, end: 0);
+      },
+    );
+  }
+}
+
+// ─── Tab 2: Settings ──────────────────────────────────────────────────────────
+
+class _SettingsTab extends StatelessWidget {
+  final AppState state;
+  const _SettingsTab({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.surfaceVariant,
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        title: const Text('Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          // About card
+          _SettingsSection(
+            title: 'About',
+            children: [
+              _SettingsTile(
+                icon: Icons.balance_rounded,
+                iconColor: AppColors.primary,
+                title: 'Split Fair',
+                subtitle: 'Fair rent splitting — weighted by room size, features, and quality.',
+                onTap: () => _showAbout(context),
+              ),
+              _SettingsTile(
+                icon: Icons.calculate_rounded,
+                iconColor: const Color(0xFF378ADD),
+                title: 'How scoring works',
+                subtitle: 'Points per sqft, amenities, and room quality.',
+                onTap: () => showModalBottomSheet(
+                  context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+                  builder: (_) => const _ScoringExplainerSheet(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _SettingsSection(
+            title: 'Data',
+            children: [
+              _SettingsTile(
+                icon: Icons.refresh_rounded,
+                iconColor: AppColors.error,
+                title: 'Reset everything',
+                subtitle: 'Clear all rooms and start fresh.',
+                onTap: () => _showResetDialog(context, state),
+                destructive: true,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -311,6 +591,66 @@ class HomeScreen extends StatelessWidget {
         ),
       ],
     ));
+  }
+}
+
+class _SettingsSection extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+  const _SettingsSection({required this.title, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(
+        padding: const EdgeInsets.only(left: 4, bottom: 8),
+        child: Text(title.toUpperCase(),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textTertiary, letterSpacing: 0.8)),
+      ),
+      Container(
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+        child: Column(children: children.asMap().entries.map((e) {
+          final isLast = e.key == children.length - 1;
+          return Column(children: [
+            e.value,
+            if (!isLast) const Divider(height: 1, indent: 56, endIndent: 16),
+          ]);
+        }).toList()),
+      ),
+    ]);
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool destructive;
+  const _SettingsTile({
+    required this.icon, required this.iconColor, required this.title,
+    required this.subtitle, required this.onTap, this.destructive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: destructive ? AppColors.error.withOpacity(0.1) : iconColor.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 18, color: destructive ? AppColors.error : iconColor),
+      ),
+      title: Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+        color: destructive ? AppColors.error : AppColors.textPrimary)),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+      trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textTertiary),
+    );
   }
 }
 
@@ -406,7 +746,6 @@ class _AddressFieldState extends State<_AddressField> {
   @override
   void didUpdateWidget(_AddressField old) {
     super.didUpdateWidget(old);
-    // Sync field if state was reset externally (e.g. reset button)
     if (widget.initialValue != old.initialValue && widget.initialValue != _ctrl.text) {
       _ctrl.text = widget.initialValue;
     }
@@ -464,134 +803,6 @@ class _AddressFieldState extends State<_AddressField> {
         ),
       ),
     );
-  }
-}
-
-// ─── Communal Space Card ─────────────────────────────────────────────────────
-
-class _CommunalSpaceCard extends StatefulWidget {
-  final AppState state;
-  const _CommunalSpaceCard({required this.state});
-  @override
-  State<_CommunalSpaceCard> createState() => _CommunalSpaceCardState();
-}
-
-class _CommunalSpaceCardState extends State<_CommunalSpaceCard> {
-  late final TextEditingController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    final v = widget.state.totalAptSqft;
-    _ctrl = TextEditingController(text: v > 0 ? v.toInt().toString() : '');
-  }
-
-  @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    final state = widget.state;
-    final enabled = state.communalEnabled;
-    final communal = state.communalSqft;
-
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeInOut,
-      child: Container(
-        decoration: BoxDecoration(
-          color: enabled ? AppColors.primaryLight : AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: enabled ? AppColors.primary.withOpacity(0.3) : AppColors.border),
-        ),
-        child: Column(
-          children: [
-            // Toggle row
-            InkWell(
-              onTap: () => state.setCommunalEnabled(!enabled),
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                child: Row(children: [
-                  Container(
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(
-                      color: enabled ? AppColors.primary : AppColors.surfaceVariant,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.house_rounded, size: 18,
-                      color: enabled ? Colors.white : AppColors.textTertiary),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Itemize communal space', style: Theme.of(context).textTheme.titleMedium),
-                      Text('Assign each room\'s access in the room editor',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12)),
-                    ]),
-                  ),
-                  Switch(
-                    value: enabled,
-                    onChanged: state.setCommunalEnabled,
-                    activeColor: AppColors.primary,
-                  ),
-                ]),
-              ),
-            ),
-            // Expanded content when enabled
-            if (enabled) ...[
-              const Divider(height: 1, indent: 16, endIndent: 16),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  TextFormField(
-                    controller: _ctrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Total apartment sqft',
-                      hintText: 'e.g. 1200',
-                      suffixText: 'sqft',
-                    ),
-                    onChanged: (v) {
-                      final parsed = double.tryParse(v);
-                      state.setTotalAptSqft(parsed ?? 0);
-                    },
-                  ),
-                  if (communal > 0) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(children: [
-                        const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.primary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '${communal.toInt()} sqft shared areas. If the areas are not shared amongst roommates equally, uncheck "Equal access to communal space" in the room editor and adjust sliders accordingly.',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontSize: 12, color: AppColors.primaryDark),
-                          ),
-                        ),
-                      ]),
-                    ),
-                  ] else if (state.totalAptSqft > 0) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      'Total sqft must be greater than the sum of all rooms.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 12, color: AppColors.error),
-                    ),
-                  ],
-                ]),
-              ),
-            ],
-          ],
-        ),
-      ),
-    ).animate().fadeIn(duration: 300.ms, delay: 35.ms).slideY(begin: 0.05, end: 0);
   }
 }
 
@@ -675,7 +886,6 @@ class _SwipeDeleteWrapperState extends State<_SwipeDeleteWrapper>
       onHorizontalDragUpdate: widget.enabled ? _onDragUpdate : null,
       onHorizontalDragEnd: widget.enabled ? _onDragEnd : null,
       child: Stack(clipBehavior: Clip.none, children: [
-        // ── Gradient delete background ─────────────────────────────────────
         Positioned.fill(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
@@ -724,7 +934,6 @@ class _SwipeDeleteWrapperState extends State<_SwipeDeleteWrapper>
             ),
           ),
         ),
-        // ── Card with Tinder-style transform ──────────────────────────────
         Transform(
           alignment: Alignment.center,
           transform: Matrix4.identity()

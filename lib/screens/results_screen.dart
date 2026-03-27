@@ -14,8 +14,21 @@ import '../widgets/scale_animation.dart';
 import '../widgets/score_breakdown.dart';
 import 'paywall_sheet.dart';
 
-class ResultsScreen extends StatelessWidget {
+class ResultsScreen extends StatefulWidget {
   const ResultsScreen({super.key});
+  @override
+  State<ResultsScreen> createState() => _ResultsScreenState();
+}
+
+class _ResultsScreenState extends State<ResultsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Auto-save result as soon as this screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<AppState>().autoSaveResult();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,11 +148,7 @@ class _TotalHeaderState extends State<_TotalHeader> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) {
-    return Hero(
-      tag: 'total_rent_amount',
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
+    return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -167,9 +176,7 @@ class _TotalHeaderState extends State<_TotalHeader> with SingleTickerProviderSta
             Text('Split across ${widget.count} rooms',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withOpacity(0.8))),
           ]),
-        ),
-      ),
-    ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.97, 0.97), end: const Offset(1, 1));
+        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.97, 0.97), end: const Offset(1, 1));
   }
 }
 
