@@ -49,7 +49,7 @@ Split Fair does not integrate any third-party analytics, advertising, or trackin
 - Social media SDKs
 - Any other third-party data collection tools
 
-**In-App Purchases:** Split Fair offers two optional non-consumable in-app purchases (.99 each), processed entirely through the Apple App Store or Google Play Store. We do not receive or store your payment information. All purchase transactions are handled by Apple or Google under their respective privacy policies:
+**In-App Purchases:** Split Fair offers two optional non-consumable in-app purchases ($1.99 each), processed entirely through the Apple App Store or Google Play Store. We do not receive or store your payment information. All purchase transactions are handled by Apple or Google under their respective privacy policies:
 
 - [Google Privacy Policy](https://policies.google.com/privacy)
 - [Apple Privacy Policy](https://www.apple.com/legal/privacy/)

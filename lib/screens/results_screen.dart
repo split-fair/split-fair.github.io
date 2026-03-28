@@ -24,7 +24,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-save result as soon as this screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<AppState>().autoSaveResult();
     });
@@ -51,31 +50,45 @@ class _ResultsScreenState extends State<ResultsScreen> {
             body: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                _TotalHeader(total: total, count: results.length),
-                const SizedBox(height: 16),
-                _ScaleCard(results: results)
-                  .animate().fadeIn(duration: 450.ms, delay: 80.ms).slideY(begin: 0.04, end: 0),
-                const SizedBox(height: 20),
+                // ── SUMMARY card with donut + scale icon center ──────────
+                _SummaryCard(results: results, total: total),
+                const SizedBox(height: 24),
+
+                // ── EACH PERSON PAYS ─────────────────────────────────────
                 const SectionHeader(label: 'Each person pays'),
                 const SizedBox(height: 8),
                 ...results.asMap().entries.map((e) {
                   final color = AppColors.roomColors[e.key % AppColors.roomColors.length];
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: AmountCard(name: e.value.room.name, tenant: e.value.room.tenant, amount: e.value.amount, percentage: e.value.percentage, color: color, rank: e.key + 1)
-                      .animate().fadeIn(duration: 300.ms, delay: (e.key * 60).ms).slideX(begin: 0.05, end: 0),
+                    child: _StitchAmountCard(
+                      result: e.value,
+                      color: color,
+                      total: total,
+                    ).animate()
+                        .fadeIn(duration: 300.ms, delay: (e.key * 60).ms)
+                        .slideX(begin: 0.05, end: 0),
                   );
                 }),
                 const SizedBox(height: 20),
-                if (results.length <= 2) ...[
-                  _DonutCard(results: results, total: total),
-                  const SizedBox(height: 20),
-                ],
+
+                // ── Visual breakdown bar chart ───────────────────────────
                 _BreakdownCard(results: results),
                 const SizedBox(height: 20),
+
+                // ── Why these numbers? ───────────────────────────────────
                 _WhyCard(results: results),
                 const SizedBox(height: 20),
-                _ShareCard(results: results, total: total, onShareText: () => _shareText(context, results, total), onCopyText: () => _copyToClipboard(context, results, total), onExportPdf: () => _exportPdf(context, state, results), isUnlocked: state.iapUnlocked),
+
+                // ── Share section ────────────────────────────────────────
+                _ShareCard(
+                  results: results,
+                  total: total,
+                  onShareText: () => _shareText(context, results, total),
+                  onCopyText: () => _copyToClipboard(context, results, total),
+                  onExportPdf: () => _exportPdf(context, state, results),
+                  isUnlocked: state.iapUnlocked,
+                ),
                 const SizedBox(height: 40),
               ],
             ),
@@ -123,15 +136,17 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 }
 
-class _TotalHeader extends StatefulWidget {
+// ─── SUMMARY CARD: green header + donut with scale icon center ─────────────
+
+class _SummaryCard extends StatefulWidget {
+  final List<SplitResult> results;
   final double total;
-  final int count;
-  const _TotalHeader({required this.total, required this.count});
+  const _SummaryCard({required this.results, required this.total});
   @override
-  State<_TotalHeader> createState() => _TotalHeaderState();
+  State<_SummaryCard> createState() => _SummaryCardState();
 }
 
-class _TotalHeaderState extends State<_TotalHeader> with SingleTickerProviderStateMixin {
+class _SummaryCardState extends State<_SummaryCard> with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _anim;
 
@@ -148,35 +163,171 @@ class _TotalHeaderState extends State<_TotalHeader> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) {
+    final slices = widget.results.asMap().entries.map((e) {
+      final color = AppColors.roomColors[e.key % AppColors.roomColors.length];
+      return (color, e.value.percentage, e.value.room.tenant);
+    }).toList();
+
     return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(children: [
+        // ── Green gradient header ──────────────────────────────────────
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
               colors: [AppColors.primary, AppColors.primaryDark],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Total monthly rent',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withOpacity(0.8))),
-            const SizedBox(height: 6),
+            Text('SUMMARY',
+              style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.2,
+                color: Colors.white.withOpacity(0.7),
+              )),
+            const SizedBox(height: 8),
             AnimatedBuilder(
               animation: _anim,
               builder: (_, __) {
                 final displayed = widget.total * _anim.value;
-                final formatted = '\$${displayed.toStringAsFixed(2)}';
-                final style = Theme.of(context).textTheme.displayLarge?.copyWith(
-                  color: Colors.white, fontSize: 38, fontWeight: FontWeight.w700);
-                return _RollingHeaderText(text: formatted, style: style!);
+                return _RollingHeaderText(
+                  text: '\$${displayed.toStringAsFixed(0)}',
+                  style: const TextStyle(fontSize: 38, fontWeight: FontWeight.w700, color: Colors.white, height: 1.1),
+                );
               },
             ),
+            const SizedBox(height: 2),
+            Text('/month',
+              style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7))),
             const SizedBox(height: 4),
-            Text('Split across ${widget.count} rooms',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withOpacity(0.8))),
+            Text('Split across ${widget.results.length} rooms',
+              style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.8))),
           ]),
-        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.97, 0.97), end: const Offset(1, 1));
+        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.97, 0.97), end: const Offset(1, 1)),
+
+        // ── Donut chart with scale icon center ────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Donut ring with scale icon in center
+              SizedBox(
+                width: 160,
+                height: 160,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 900),
+                  curve: Curves.easeOut,
+                  builder: (context, progress, _) {
+                    return CustomPaint(
+                      painter: _DonutPainter(slices: slices, progress: progress),
+                      child: Center(
+                        child: Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryLight,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.balance_rounded, size: 26, color: AppColors.primary),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ).animate().fadeIn(duration: 450.ms, delay: 100.ms),
+              const SizedBox(width: 20),
+              // Legend
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: widget.results.asMap().entries.map((e) {
+                    final color = AppColors.roomColors[e.key % AppColors.roomColors.length];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 7),
+                      child: Row(children: [
+                        Container(
+                          width: 11, height: 11,
+                          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            e.value.room.tenant,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w500),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                          Text(
+                            '\$${e.value.amount.toStringAsFixed(0)}/mo',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+                          ),
+                          Text(
+                            '${(e.value.percentage * 100).toStringAsFixed(0)}%',
+                            style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                          ),
+                        ]),
+                      ]),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Balance scale for 2 rooms ─────────────────────────────────
+        if (widget.results.length == 2) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: _buildBalanceScale(),
+          ),
+        ] else
+          const SizedBox(height: 16),
+      ]),
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.04, end: 0);
+  }
+
+  Widget _buildBalanceScale() {
+    final sorted = [...widget.results]..sort((a, b) => b.amount.compareTo(a.amount));
+    final left = sorted.first;
+    final right = sorted.last;
+    final leftIdx = widget.results.indexOf(left);
+    final rightIdx = widget.results.indexOf(right);
+    final leftColor = AppColors.roomColors[leftIdx % AppColors.roomColors.length];
+    final rightColor = AppColors.roomColors[rightIdx % AppColors.roomColors.length];
+
+    return Column(children: [
+      const Divider(),
+      const SizedBox(height: 8),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(6)),
+        child: const Text('Balanced by room score', style: TextStyle(fontSize: 10, color: AppColors.primaryDark, fontWeight: FontWeight.w500)),
+      ),
+      const SizedBox(height: 8),
+      JudicialScaleWidget(
+        leftPercentage: left.percentage,
+        rightPercentage: right.percentage,
+        leftLabel: left.room.tenant,
+        rightLabel: right.room.tenant,
+        leftAmount: left.amount,
+        rightAmount: right.amount,
+        leftColor: leftColor,
+        rightColor: rightColor,
+      ),
+    ]);
   }
 }
 
@@ -213,6 +364,112 @@ class _RollingHeaderText extends StatelessWidget {
   }
 }
 
+// ─── Stitch-style amount card: colored left border, dollar + percentage ─────
+
+class _StitchAmountCard extends StatefulWidget {
+  final SplitResult result;
+  final Color color;
+  final double total;
+  const _StitchAmountCard({required this.result, required this.color, required this.total});
+  @override
+  State<_StitchAmountCard> createState() => _StitchAmountCardState();
+}
+
+class _StitchAmountCardState extends State<_StitchAmountCard> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutExpo);
+    Future.delayed(const Duration(milliseconds: 60), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    final room = widget.result.room;
+    final pctLabel = '${(widget.result.percentage * 100).toStringAsFixed(0)}%';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(children: [
+          // 4px colored left accent
+          Container(width: 4, color: widget.color),
+          // Content
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(children: [
+                // Avatar
+                Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: widget.color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    room.tenant.isNotEmpty ? room.tenant[0].toUpperCase() : '?',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: widget.color),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Name + room label
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(room.tenant, style: Theme.of(context).textTheme.titleMedium),
+                    Text(room.name, style: Theme.of(context).textTheme.bodyMedium),
+                  ]),
+                ),
+                // Dollar amount + percentage badge
+                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  AnimatedBuilder(
+                    animation: _anim,
+                    builder: (_, __) {
+                      final displayed = widget.result.amount * _anim.value;
+                      return Text(
+                        '\$${displayed.toStringAsFixed(2)}/mo',
+                        style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.w700, color: widget.color,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: widget.color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(pctLabel,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: widget.color)),
+                  ),
+                ]),
+              ]),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+// ─── Visual breakdown bar chart ─────────────────────────────────────────────
+
 class _BreakdownCard extends StatelessWidget {
   final List<SplitResult> results;
   const _BreakdownCard({required this.results});
@@ -233,6 +490,8 @@ class _BreakdownCard extends StatelessWidget {
     ).animate().fadeIn(duration: 400.ms, delay: 200.ms);
   }
 }
+
+// ─── Share card ──────────────────────────────────────────────────────────────
 
 class _ShareCard extends StatelessWidget {
   final List<SplitResult> results;
@@ -282,94 +541,6 @@ class _ShareCard extends StatelessWidget {
   }
 }
 
-// ─── Donut chart card ────────────────────────────────────────────────────────
-
-class _DonutCard extends StatelessWidget {
-  final List<SplitResult> results;
-  final double total;
-  const _DonutCard({required this.results, required this.total});
-
-  @override
-  Widget build(BuildContext context) {
-    final slices = results.asMap().entries.map((e) {
-      final color = AppColors.roomColors[e.key % AppColors.roomColors.length];
-      return (color, e.value.percentage, e.value.room.tenant);
-    }).toList();
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Text('Rent split at a glance', style: Theme.of(context).textTheme.titleMedium),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(6)),
-            child: const Text('Weighted by room score', style: TextStyle(fontSize: 10, color: AppColors.primaryDark, fontWeight: FontWeight.w500)),
-          ),
-        ]),
-        const SizedBox(height: 16),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Donut ring — no built-in legend
-            DonutChart(
-              slices: slices,
-              centerLabel: '\$${total.toStringAsFixed(0)}',
-              centerSub: 'total',
-              showLegend: false,
-              size: 148,
-            ),
-            const SizedBox(width: 20),
-            // Custom legend: ● Name   $X/mo   X%
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: results.asMap().entries.map((e) {
-                  final color = AppColors.roomColors[e.key % AppColors.roomColors.length];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 7),
-                    child: Row(children: [
-                      Container(
-                        width: 11, height: 11,
-                        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          e.value.room.tenant,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13, fontWeight: FontWeight.w500),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                        Text(
-                          '\$${e.value.amount.toStringAsFixed(0)}/mo',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
-                        ),
-                        Text(
-                          '${(e.value.percentage * 100).toStringAsFixed(0)}%',
-                          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
-                        ),
-                      ]),
-                    ]),
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
-        ),
-      ]),
-    ).animate().fadeIn(duration: 400.ms, delay: 180.ms);
-  }
-}
-
 // ─── Why these numbers? card ─────────────────────────────────────────────────
 
 class _WhyCard extends StatelessWidget {
@@ -389,7 +560,6 @@ class _WhyCard extends StatelessWidget {
         ...results.asMap().entries.map((e) {
           final color = AppColors.roomColors[e.key % AppColors.roomColors.length];
           final room = e.value.room;
-          // Condensed: sqft pts | feature pts | quality pts
           final sqftPts = room.sqft;
           final qualityPts = (room.naturalLightScore * 3) + (room.noiseScore * 2) + (room.storageScore * 1.5);
           final bonusPts = e.value.score - sqftPts - qualityPts;
@@ -448,67 +618,6 @@ class _WhyCard extends StatelessWidget {
   }
 }
 
-// ─── Scale of Fairness card ───────────────────────────────────────────────────
-
-class _ScaleCard extends StatelessWidget {
-  final List<SplitResult> results;
-  const _ScaleCard({required this.results});
-
-  @override
-  Widget build(BuildContext context) {
-    // 3+ rooms: show the combined donut chart instead of the balance scale
-    if (results.length > 2) {
-      final total = results.fold(0.0, (s, r) => s + r.amount);
-      return _DonutCard(results: results, total: total);
-    }
-
-    final sorted = [...results]..sort((a, b) => b.amount.compareTo(a.amount));
-    final left = sorted.first;
-    final right = sorted.last;
-    final leftIdx = results.indexOf(left);
-    final rightIdx = results.indexOf(right);
-    final leftColor = AppColors.roomColors[leftIdx % AppColors.roomColors.length];
-    final rightColor = AppColors.roomColors[rightIdx % AppColors.roomColors.length];
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            Text('Scales of fairness', style: Theme.of(context).textTheme.titleMedium),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(6)),
-              child: const Text('Balanced by room score', style: TextStyle(fontSize: 10, color: AppColors.primaryDark, fontWeight: FontWeight.w500)),
-            ),
-          ]),
-          const SizedBox(height: 2),
-          Text('The heavier side pays more — weighted by room value.', style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 10),
-          JudicialScaleWidget(
-            leftPercentage: left.percentage,
-            rightPercentage: right.percentage,
-            leftLabel: left.room.tenant,
-            rightLabel: right.room.tenant,
-            leftAmount: left.amount,
-            rightAmount: right.amount,
-            leftColor: leftColor,
-            rightColor: rightColor,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
 class _PtChip extends StatelessWidget {
   final String label;
   final Color color;
@@ -521,6 +630,41 @@ class _PtChip extends StatelessWidget {
       child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: color)),
     );
   }
+}
+
+// ─── Donut painter (reused from common_widgets but local for the summary) ───
+
+class _DonutPainter extends CustomPainter {
+  final List<(Color, double, String)> slices;
+  final double progress;
+  const _DonutPainter({required this.slices, required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 14;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    const strokeWidth = 26.0;
+    const gapAngle = 0.04;
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    double startAngle = -pi / 2;
+
+    for (final slice in slices) {
+      final sweep = slice.$2 * 2 * pi * progress - gapAngle;
+      if (sweep <= 0) continue;
+      paint.color = slice.$1;
+      canvas.drawArc(rect, startAngle + gapAngle / 2, sweep, false, paint);
+      startAngle += slice.$2 * 2 * pi * progress;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DonutPainter old) => old.progress != progress;
 }
 
 // ─── Confetti burst ──────────────────────────────────────────────────────────
@@ -565,9 +709,9 @@ class _ConfettiBurstState extends State<_ConfettiBurst> with SingleTickerProvide
 }
 
 class _Particle {
-  final double x;          // 0–1 normalized start x
-  final double vx;         // horizontal velocity
-  final double vy;         // vertical velocity (downward)
+  final double x;
+  final double vx;
+  final double vy;
   final double size;
   final Color color;
   final double rotation;
@@ -601,10 +745,9 @@ class _ConfettiPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint();
     for (final p in particles) {
-      // Particles burst upward then fall with gravity
       final t = progress;
       final px = (p.x + p.vx * t) * size.width;
-      final py = (-0.15 + p.vy * t * t * 1.8) * size.height; // parabolic arc
+      final py = (-0.15 + p.vy * t * t * 1.8) * size.height;
       if (py > size.height) continue;
 
       final opacity = (1.0 - (t * 1.2).clamp(0.0, 1.0)).clamp(0.0, 1.0);

@@ -13,7 +13,7 @@ Primary: Finance
 Secondary: Utilities
 
 ### Price
-Free (with $1.99 in-app purchase for PDF Export)
+Free (with two $1.99 in-app purchases: PDF Export and Saved Configs)
 
 ---
 
@@ -48,6 +48,9 @@ Enter the total monthly rent, add each room, and rate it by size and features. S
 
 **PDF EXPORT ($1.99 one-time)**
 Generate a professional, printable PDF of your full rent split with all room details included. One-time purchase. No subscription. Yours forever.
+
+**SAVED CONFIGS ($1.99 one-time)**
+Save unlimited room configurations so you can reload and recalculate whenever roommates change. One-time purchase — save as many setups as you need.
 
 No accounts. No login. No data collected. Your roommates never have to know you used an app — just show up with a number and the math to back it up.
 
@@ -105,6 +108,9 @@ FEATURES
 
 PDF EXPORT ($1.99 one-time purchase)
 Professional printable PDF with full room breakdown. One-time purchase, no subscription.
+
+SAVED CONFIGS ($1.99 one-time purchase)
+Save unlimited room setups and reload them whenever roommates change. One-time purchase.
 
 No accounts. No login. No personal data collected.
 

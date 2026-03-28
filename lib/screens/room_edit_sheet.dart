@@ -143,20 +143,87 @@ class _RoomEditSheetState extends State<RoomEditSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.of(context).viewInsets.bottom;
+    final roomIdx = widget.allRooms.indexWhere((r) => r.id == widget.room.id);
+    final roomColor = roomIdx >= 0 ? AppColors.roomColors[roomIdx % AppColors.roomColors.length] : AppColors.primary;
+
     return Container(
       decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const SizedBox(height: 12),
-        Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.borderMed, borderRadius: BorderRadius.circular(2))),
-        const SizedBox(height: 8),
+        // ── Hero image header (Natural Light style) ──────────────────
+        ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          child: Stack(children: [
+            SizedBox(
+              width: double.infinity,
+              height: 140,
+              child: Image.asset(
+                'assets/images/hero_natural_light.jpg',
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+                errorBuilder: (_, __, ___) => Container(
+                  height: 140,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [roomColor.withOpacity(0.15), AppColors.surface],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Gradient fade to white at bottom
+            Positioned(
+              bottom: 0, left: 0, right: 0,
+              child: Container(
+                height: 60,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, AppColors.surface],
+                  ),
+                ),
+              ),
+            ),
+            // Drag handle on top of hero
+            Positioned(
+              top: 12, left: 0, right: 0,
+              child: Center(
+                child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.7), borderRadius: BorderRadius.circular(2))),
+              ),
+            ),
+          ]),
+        ),
+        // ── Header row with room info + score badge ─────────────────
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
           child: Row(children: [
-            Text('Edit room', style: Theme.of(context).textTheme.titleLarge),
-            const Spacer(),
+            Container(
+              width: 12, height: 12,
+              decoration: BoxDecoration(color: roomColor, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 8),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(_room.name.isNotEmpty ? _room.name : 'Edit room',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20)),
+              if (_room.tenant.isNotEmpty)
+                Text(_room.tenant, style: Theme.of(context).textTheme.bodyMedium),
+            ])),
+            // Live score badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${_room.totalScore.toStringAsFixed(0)} pts',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primaryDark),
+              ),
+            ),
+            const SizedBox(width: 8),
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-            const SizedBox(width: 4),
-            ElevatedButton(onPressed: _save, style: ElevatedButton.styleFrom(minimumSize: const Size(80, 40), padding: const EdgeInsets.symmetric(horizontal: 20)), child: const Text('Save')),
           ]),
         ),
         const Divider(),
@@ -360,7 +427,24 @@ class _RoomEditSheetState extends State<RoomEditSheet> {
               ],
               const SizedBox(height: 24),
               ScoreBreakdown(room: _room),
+              const SizedBox(height: 20),
             ]).animate().fadeIn(duration: 250.ms).slideY(begin: 0.03, end: 0),
+          ),
+        ),
+        // ── Sticky Save button at bottom ─────────────────────────────
+        Container(
+          padding: EdgeInsets.fromLTRB(20, 12, 20, 12 + MediaQuery.of(context).padding.bottom),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: const Border(top: BorderSide(color: AppColors.border, width: 0.5)),
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _save,
+              child: const Text('Save changes'),
+            ),
           ),
         ),
       ]),

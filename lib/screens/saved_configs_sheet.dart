@@ -184,7 +184,7 @@ class _SavedConfigsSheetState extends State<SavedConfigsSheet> {
                         subtitle: Text('${c.rooms.length} rooms · \$${c.totalRent.toStringAsFixed(0)}/mo', style: Theme.of(context).textTheme.bodyMedium),
                         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                           TextButton(onPressed: () => _load(state, c.id, c.name), child: const Text('Load')),
-                          IconButton(onPressed: () => _delete(state, c.id, c.name), icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.error)),
+                          IconButton(onPressed: () => _delete(state, c.id, c.name), icon: Icon(Icons.delete_forever_rounded, size: 20, color: AppColors.error)),
                         ]),
                       ).animate().fadeIn(duration: 200.ms, delay: (i * 40).ms);
                     },
@@ -232,3 +232,4 @@ class _SavedConfigsSheetState extends State<SavedConfigsSheet> {
     });
   }
 }
+      

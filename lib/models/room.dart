@@ -40,6 +40,9 @@ class Room {
     );
   }
 
+  /// Convenience getter: score without communal extra sqft.
+  double get totalScore => computeScore();
+
   double computeScore({double extraSqft = 0}) {
     double score = (sqft + extraSqft) * 1.0;
     if (hasPrivateBath) score += 40;

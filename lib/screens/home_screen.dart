@@ -338,10 +338,33 @@ class _SplitFairTab extends StatelessWidget {
 
 // ─── Tab 1: Saved results ─────────────────────────────────────────────────────
 
-class _SavedTab extends StatelessWidget {
+class _SavedTab extends StatefulWidget {
   final AppState state;
   final VoidCallback onLoaded;
   const _SavedTab({required this.state, required this.onLoaded});
+  @override
+  State<_SavedTab> createState() => _SavedTabState();
+}
+
+class _SavedTabState extends State<_SavedTab> {
+  bool _showTooltip = false;
+  static bool _hasShownTooltip = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!_hasShownTooltip) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.state.savedResults.isEmpty) {
+          setState(() => _showTooltip = true);
+          _hasShownTooltip = true;
+          Future.delayed(const Duration(seconds: 4), () {
+            if (mounted) setState(() => _showTooltip = false);
+          });
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -358,10 +381,39 @@ class _SavedTab extends StatelessWidget {
           ),
         ],
       ),
-      body: ChangeNotifierProvider.value(
-        value: state,
-        child: _SavedResultsBody(onLoaded: onLoaded),
-      ),
+      body: Stack(children: [
+        ChangeNotifierProvider.value(
+          value: widget.state,
+          child: _SavedResultsBody(onLoaded: widget.onLoaded),
+        ),
+        // "Save Your Configs" tooltip overlay
+        if (_showTooltip)
+          Positioned(
+            top: 20, left: 20, right: 20,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+              ),
+              child: Row(children: [
+                const Icon(Icons.bookmark_rounded, color: Colors.white, size: 22),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('Save Your Configs', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text('Your splits auto-save here when you calculate. Reload anytime!',
+                    style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12, height: 1.4)),
+                ])),
+                GestureDetector(
+                  onTap: () => setState(() => _showTooltip = false),
+                  child: Icon(Icons.close_rounded, color: Colors.white.withOpacity(0.7), size: 18),
+                ),
+              ]),
+            ).animate().fadeIn(duration: 300.ms).slideY(begin: -0.2, end: 0),
+          ),
+      ]),
     );
   }
 }

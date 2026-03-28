@@ -97,7 +97,7 @@ class _SplashState extends State<_Splash> {
     if (!mounted) return;
     // Kick off IAP initialisation in the background — doesn't block navigation.
     context.read<AppState>().initIap();
-    final seenOnboarding = results[1] as bool;
+    final seenOnboarding = false; // TODO: restore → results[1] as bool;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) =>
@@ -149,7 +149,3 @@ class _SplashState extends State<_Splash> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
