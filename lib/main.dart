@@ -149,3 +149,7 @@ class _SplashState extends State<_Splash> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
