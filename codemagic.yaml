@@ -58,9 +58,15 @@ workflows:
           - External Testers
 
   android-release:
-    name: Split Fair — Android Play Store
+    name: Split Fair — Android Release
     max_build_duration: 60
     instance_type: mac_mini_m2
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
     environment:
       flutter: stable
       groups:
@@ -77,18 +83,26 @@ workflows:
           export KEYSTORE_PATH=$CM_BUILD_DIR/split-fair-release.jks
           export KEYSTORE_PASSWORD=$CM_KEYSTORE_PASSWORD
           export KEY_PASSWORD=$CM_KEY_PASSWORD
-      - name: Build Android AAB
+      - name: Build Android APK and AAB
         script: |
           export KEYSTORE_PATH=$CM_BUILD_DIR/split-fair-release.jks
           export KEYSTORE_PASSWORD=$CM_KEYSTORE_PASSWORD
           export KEY_ALIAS=split-fair
           export KEY_PASSWORD=$CM_KEY_PASSWORD
+          flutter build apk --release
           flutter build appbundle --release
     artifacts:
+      - build/**/outputs/**/*.apk
       - build/**/outputs/**/*.aab
       - build/**/outputs/**/mapping.txt
-    # publishing:       # DISABLED — awaiting Google Play identity verification + service account JSON
-    #   google_play:
-    #     credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-    #     track: internal
-    #     submit_as_draft: true
+    publishing:
+      email:
+        recipients:
+          - clairmont425@gmail.com
+        notify:
+          success: true
+          failure: true
+    # google_play:       # DISABLED — awaiting Google Play identity verification + service account JSON
+    #   credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+    #   track: internal
+    #   submit_as_draft: true
