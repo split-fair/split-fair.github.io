@@ -51,3 +51,14 @@ Split_Fair_Marketing_Strategy.docx
 *.jks
 *.jks.b64
 certificate_key.pem
+
+# Windows dev scripts & temp files
+.cf-log.txt
+.tunnel-url
+*.bat
+*.ps1
+*.lnk
+
+# Stitch design briefs (local reference only)
+STITCH_DESIGN_BRIEF*.md
+STITCH_ONBOARDING_PROMPT.md
