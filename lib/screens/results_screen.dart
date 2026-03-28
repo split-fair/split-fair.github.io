@@ -172,7 +172,7 @@ class _SummaryCardState extends State<_SummaryCard> with SingleTickerProviderSta
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 4))],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(children: [
@@ -208,7 +208,7 @@ class _SummaryCardState extends State<_SummaryCard> with SingleTickerProviderSta
             Text('/month',
               style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7))),
             const SizedBox(height: 4),
-            Text('Split across ${widget.results.length} rooms',
+            Text('${widget.results.length} rooms total · Optimized balance',
               style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.8))),
           ]),
         ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.97, 0.97), end: const Offset(1, 1)),
@@ -401,7 +401,7 @@ class _StitchAmountCardState extends State<_StitchAmountCard> with SingleTickerP
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 2))],
       ),
       clipBehavior: Clip.antiAlias,
       child: IntrinsicHeight(
@@ -478,7 +478,11 @@ class _BreakdownCard extends StatelessWidget {
     final maxFraction = results.map((r) => r.percentage).reduce((a, b) => a > b ? a : b);
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 2))],
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Visual breakdown', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 16),
@@ -505,7 +509,11 @@ class _ShareCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 2))],
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Share with roommates', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
@@ -551,7 +559,11 @@ class _WhyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 2))],
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Why these numbers?', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
@@ -724,8 +736,8 @@ class _Particle {
         vy = 0.3 + r.nextDouble() * 0.7,
         size = 5 + r.nextDouble() * 7,
         color = [
-          const Color(0xFF1D9E75),
-          const Color(0xFFEF9F27),
+          const Color(0xFF00694C),
+          const Color(0xFF855400),
           const Color(0xFF378ADD),
           const Color(0xFFD4537E),
           const Color(0xFFEA4335),

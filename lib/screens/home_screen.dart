@@ -41,15 +41,16 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           bottomNavigationBar: Container(
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, -2))],
             ),
             child: BottomNavigationBar(
               currentIndex: _selectedIndex,
               onTap: _onTabTap,
               selectedItemColor: AppColors.primary,
               unselectedItemColor: AppColors.textTertiary,
-              backgroundColor: AppColors.surface,
+              backgroundColor: Colors.transparent,
               type: BottomNavigationBarType.fixed,
               selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
               unselectedLabelStyle: const TextStyle(fontSize: 11),
@@ -175,7 +176,11 @@ class _SplitFairTab extends StatelessWidget {
       const SizedBox(height: 8),
       Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 2))],
+        ),
         child: CurrencyField(value: state.totalRent, label: 'Monthly total', onChanged: state.setTotalRent),
       ),
     ]).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05, end: 0);
@@ -449,7 +454,7 @@ class _SavedResultsBody extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 2))],
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             // Header
@@ -635,7 +640,11 @@ class _SettingsSection extends StatelessWidget {
           style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textTertiary, letterSpacing: 0.8)),
       ),
       Container(
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 2))],
+        ),
         child: Column(children: children.asMap().entries.map((e) {
           final isLast = e.key == children.length - 1;
           return Column(children: [
@@ -721,7 +730,11 @@ class _ScoringExplainerSheet extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 16),
         Container(
-          decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 1))],
+          ),
           child: Column(children: _rows.asMap().entries.map((e) {
             final isLast = e.key == _rows.length - 1;
             return Column(children: [
@@ -985,7 +998,11 @@ class _RoomTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 2))],
+      ),
       child: Material(
         color: Colors.transparent, borderRadius: BorderRadius.circular(16),
         child: InkWell(

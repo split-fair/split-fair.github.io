@@ -2,24 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
-  static const primary = Color(0xFF1D9E75);
+  static const primary = Color(0xFF00694C);
   static const primaryLight = Color(0xFFE1F5EE);
-  static const primaryDark = Color(0xFF0F6E56);
-  static const accent = Color(0xFFEF9F27);
+  static const primaryDark = Color(0xFF004D38);
+  static const accent = Color(0xFF855400);
   static const accentLight = Color(0xFFFAEEDA);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceVariant = Color(0xFFF8F9FA);
-  static const border = Color(0xFFE8EAED);
-  static const borderMed = Color(0xFFD0D4D9);
+  static const surfaceVariant = Color(0xFFFAF7F2);
+  static const border = Color(0xFFE8E4DF);
+  static const borderMed = Color(0xFFD0CCC7);
   static const textPrimary = Color(0xFF1A1D23);
   static const textSecondary = Color(0xFF6B7280);
   static const textTertiary = Color(0xFF9CA3AF);
   static const error = Color(0xFFE24B4A);
   static const errorLight = Color(0xFFFCEBEB);
   static const roomColors = [
-    Color(0xFF1D9E75), // green
+    Color(0xFF00694C), // green (Stitch)
     Color(0xFF378ADD), // blue
-    Color(0xFFEF9F27), // amber
+    Color(0xFF855400), // amber (Stitch)
     Color(0xFFD85A30), // deep orange-red
     Color(0xFFEA4335), // google red
     Color(0xFFD4537E), // pink
@@ -52,8 +52,9 @@ class AppTheme {
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surface, elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppColors.border, width: 1)),
+        color: AppColors.surface, elevation: 2,
+        shadowColor: Colors.black.withOpacity(0.08),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: EdgeInsets.zero,
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -77,7 +78,7 @@ class AppTheme {
       ),
       sliderTheme: const SliderThemeData(
         activeTrackColor: AppColors.primary, thumbColor: AppColors.primary,
-        overlayColor: Color(0x201D9E75), inactiveTrackColor: AppColors.border, trackHeight: 4,
+        overlayColor: Color(0x2000694C), inactiveTrackColor: AppColors.border, trackHeight: 4,
       ),
       dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1, space: 0),
       snackBarTheme: SnackBarThemeData(

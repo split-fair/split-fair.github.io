@@ -22,14 +22,14 @@ class PdfService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-                    pw.Text('Split Fair', style: pw.TextStyle(fontSize: 28, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF1D9E75))),
+                    pw.Text('Split Fair', style: pw.TextStyle(fontSize: 28, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF00694C))),
                     pw.Text('Fair Rent Calculation', style: pw.TextStyle(fontSize: 14, color: PdfColors.grey600)),
                   ]),
                   pw.Text(_formatDate(DateTime.now()), style: pw.TextStyle(fontSize: 11)),
                 ],
               ),
               pw.SizedBox(height: 6),
-              pw.Divider(color: const PdfColor.fromInt(0xFF1D9E75), thickness: 2),
+              pw.Divider(color: const PdfColor.fromInt(0xFF00694C), thickness: 2),
               pw.SizedBox(height: 24),
               pw.Container(
                 padding: const pw.EdgeInsets.all(20),
@@ -38,7 +38,7 @@ class PdfService {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text('Total Monthly Rent', style: pw.TextStyle(fontSize: 14, color: PdfColors.grey700)),
-                    pw.Text('\$${totalRent.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF0F6E56))),
+                    pw.Text('\$${totalRent.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF004D38))),
                   ],
                 ),
               ),
@@ -57,7 +57,7 @@ class PdfService {
                     pw.Padding(padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 12), child: pw.Text(r.room.tenant, style: const pw.TextStyle(fontSize: 13))),
                     pw.Padding(padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 12), child: pw.Text('${r.room.name}\n${r.room.sqft.toInt()} sqft', style: const pw.TextStyle(fontSize: 11))),
                     pw.Padding(padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 12), child: pw.Text('${(r.percentage * 100).toStringAsFixed(1)}%', style: const pw.TextStyle(fontSize: 13))),
-                    pw.Padding(padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 12), child: pw.Text('\$${r.amount.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF1D9E75)))),
+                    pw.Padding(padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 12), child: pw.Text('\$${r.amount.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF00694C)))),
                   ])),
                 ],
               ),

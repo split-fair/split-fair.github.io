@@ -172,8 +172,8 @@ class _ScalePainter extends CustomPainter {
     required this.rightColor,
   });
 
-  static const _green = Color(0xFF1D9E75);
-  static const _gold = Color(0xFFEF9F27);
+  static const _green = Color(0xFF00694C);
+  static const _gold = Color(0xFF855400);
   static const _goldDark = Color(0xFFB87333);
   static const _chainGray = Color(0xFFBFC6CE);
 
