@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/app_state.dart';
 import '../models/room.dart';
+import '../theme/app_images.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
 
@@ -46,7 +47,7 @@ class _SlideData {
 const _slides = [
   // 0 — Welcome (static)
   _SlideData(
-    heroImage: 'assets/images/hero_chad_split.jpg',
+    heroImage: AppImages.heroWelcome,
     categoryLabel: 'WELCOME',
     icon: Icons.balance_rounded,
     headline: 'Welcome to Split Fair',
@@ -54,7 +55,7 @@ const _slides = [
   ),
   // 1 — Size Matters (interactive: rent, sqft, address)
   _SlideData(
-    heroImage: 'assets/images/hero_tape_measure.jpg',
+    heroImage: AppImages.heroTapeMeasure,
     categoryLabel: 'DIMENSIONS',
     icon: Icons.square_foot_rounded,
     headline: 'Size Matters',
@@ -62,7 +63,7 @@ const _slides = [
   ),
   // 2 — How Many Rooms (interactive)
   _SlideData(
-    heroImage: 'assets/images/hero_hallway.jpg',
+    heroImage: AppImages.heroHallway,
     categoryLabel: 'CAPACITY',
     icon: Icons.bedroom_parent_rounded,
     headline: 'How Many Rooms?',
@@ -70,7 +71,7 @@ const _slides = [
   ),
   // 3 — Shared Spaces (interactive)
   _SlideData(
-    heroImage: 'assets/images/hero_kitchen.jpg',
+    heroImage: AppImages.heroKitchen,
     categoryLabel: 'COMMON AREAS',
     icon: Icons.people_rounded,
     headline: 'Shared Spaces',
@@ -78,7 +79,7 @@ const _slides = [
   ),
   // 4 — Everyone on the Same Page (static)
   _SlideData(
-    heroImage: 'assets/images/results_highfive.png',
+    heroImage: AppImages.heroResults,
     categoryLabel: 'THE VERDICT',
     icon: Icons.handshake_rounded,
     headline: 'Everyone on the Same Page',

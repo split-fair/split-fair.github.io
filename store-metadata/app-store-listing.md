@@ -62,10 +62,10 @@ Split Fair: because "let's just split it evenly" is only fair when the rooms are
 rent,split,roommate,calculator,fair,share,apartment,housing,expense,divide,PDF,utility
 
 ### Support URL
-https://clairmont425.github.io/split-fair/
+https://split-fair.github.io/
 
 ### Privacy Policy URL
-https://clairmont425.github.io/split-fair/privacy-policy.html
+https://split-fair.github.io/privacy-policy.html
 
 ---
 

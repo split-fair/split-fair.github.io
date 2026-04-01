@@ -30,4 +30,20 @@ class AppImages {
 
   /// Full-screen background for the splash screen (9:16 gradient, #E1F5EE → white).
   static const splashBg = 'assets/images/splash_bg.png';
+
+  // ── Onboarding hero images ────────────────────────────────────────────────
+  static const heroWelcome = 'assets/images/hero_chad_split.jpg';
+  static const heroTapeMeasure = 'assets/images/hero_tape_measure.jpg';
+  static const heroHallway = 'assets/images/hero_hallway.jpg';
+  static const heroKitchen = 'assets/images/hero_kitchen.jpg';
+  static const heroResults = 'assets/images/results_highfive.png';
+
+  /// All onboarding heroes — precached during splash to prevent checkerboard.
+  static const onboardingHeroes = [
+    heroWelcome,
+    heroTapeMeasure,
+    heroHallway,
+    heroKitchen,
+    heroResults,
+  ];
 }

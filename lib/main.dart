@@ -95,17 +95,23 @@ class _SplashState extends State<_Splash> {
   }
 
   Future<void> _precacheAndNavigate() async {
-    // Precache splash images, onboarding check, and minimum delay in parallel.
-    final results = await Future.wait([
+    // Precache ALL images needed before first frame — splash + onboarding heroes.
+    // Uses AppImages.onboardingHeroes so new slides are auto-precached.
+    final imageFutures = [
       precacheImage(const AssetImage(AppImages.splashBg), context).catchError((_) {}),
       precacheImage(const AssetImage(AppImages.splashLogo), context).catchError((_) {}),
+      for (final hero in AppImages.onboardingHeroes)
+        precacheImage(AssetImage(hero), context).catchError((_) {}),
+    ];
+    final results = await Future.wait([
+      ...imageFutures,
       Future.delayed(const Duration(milliseconds: 600)),
       hasSeenOnboarding(),
     ]);
     if (!mounted) return;
     // Kick off IAP initialisation in the background — doesn't block navigation.
     context.read<AppState>().initIap();
-    final seenOnboarding = false; // TEMP: force onboarding for testing — restore: results[3] as bool
+    final seenOnboarding = false; // TEMP: force onboarding for testing — restore: results.last as bool
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) =>
