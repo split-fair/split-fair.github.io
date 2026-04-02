@@ -71,6 +71,7 @@ workflows:
       flutter: stable
       groups:
         - android-signing
+        - google-play
       vars:
         PACKAGE_NAME: "com.splitfair.rent_split"
         KEY_ALIAS: "split-fair"
@@ -102,7 +103,7 @@ workflows:
         notify:
           success: true
           failure: true
-    # google_play:       # DISABLED — awaiting Google Play identity verification + service account JSON
-    #   credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-    #   track: internal
-    #   submit_as_draft: true
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true

@@ -7,12 +7,14 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/app_state.dart';
 import '../models/pdf_service.dart';
+import '../models/room.dart';
 import '../models/split_result.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/scale_animation.dart';
 import '../widgets/score_breakdown.dart';
 import 'paywall_sheet.dart';
+import 'room_edit_sheet.dart';
 
 class ResultsScreen extends StatefulWidget {
   const ResultsScreen({super.key});
@@ -65,6 +67,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       result: e.value,
                       color: color,
                       total: total,
+                      onTap: () => _openRoomEditor(context, state, e.value.room),
                     ).animate()
                         .fadeIn(duration: 300.ms, delay: (e.key * 60).ms)
                         .slideX(begin: 0.05, end: 0),
@@ -119,6 +122,23 @@ class _ResultsScreenState extends State<ResultsScreen> {
     Clipboard.setData(ClipboardData(text: _buildShareText(results, total)));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Copied to clipboard!'), duration: Duration(seconds: 2)),
+    );
+  }
+
+  void _openRoomEditor(BuildContext context, AppState state, Room room) {
+    final roomId = room.id;
+    showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (_) => RoomEditSheet(
+        room: room,
+        onSave: (updated) => state.updateRoom(roomId, updated),
+        onSaveAllCommunal: (shares) => state.updateAllCommunalShares(shares),
+        communalEnabled: true,
+        communalSqft: state.communalSqft,
+        allRooms: state.rooms,
+        totalAptSqft: state.totalAptSqft,
+        onSetTotalAptSqft: state.setTotalAptSqft,
+      ),
     );
   }
 
@@ -372,7 +392,8 @@ class _StitchAmountCard extends StatefulWidget {
   final SplitResult result;
   final Color color;
   final double total;
-  const _StitchAmountCard({required this.result, required this.color, required this.total});
+  final VoidCallback? onTap;
+  const _StitchAmountCard({required this.result, required this.color, required this.total, this.onTap});
   @override
   State<_StitchAmountCard> createState() => _StitchAmountCardState();
 }
@@ -399,73 +420,80 @@ class _StitchAmountCardState extends State<_StitchAmountCard> with SingleTickerP
     final room = widget.result.room;
     final pctLabel = '${(widget.result.percentage * 100).toStringAsFixed(0)}%';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 2))],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: IntrinsicHeight(
-        child: Row(children: [
-          // 4px colored left accent
-          Container(width: 4, color: widget.color),
-          // Content
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(children: [
-                // Avatar
-                Container(
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(
-                    color: widget.color.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    room.tenant.isNotEmpty ? room.tenant[0].toUpperCase() : '?',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: widget.color),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Name + room label
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(room.tenant, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                    const SizedBox(height: 2),
-                    Text(room.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textSecondary)),
-                  ]),
-                ),
-                // Dollar amount + percentage badge
-                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                  AnimatedBuilder(
-                    animation: _anim,
-                    builder: (_, __) {
-                      final displayed = widget.result.amount * _anim.value;
-                      return Text(
-                        '\$${displayed.toStringAsFixed(0)}',
-                        style: TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.w800, color: widget.color,
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 4),
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 2))],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: IntrinsicHeight(
+          child: Row(children: [
+            // 4px colored left accent
+            Container(width: 4, color: widget.color),
+            // Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(children: [
+                  // Avatar
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    width: 44, height: 44,
                     decoration: BoxDecoration(
-                      color: widget.color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
+                      color: widget.color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(pctLabel,
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: widget.color)),
+                    alignment: Alignment.center,
+                    child: Text(
+                      room.tenant.isNotEmpty ? room.tenant[0].toUpperCase() : '?',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: widget.color),
+                    ),
                   ),
+                  const SizedBox(width: 12),
+                  // Name + room label
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(room.tenant, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      const SizedBox(height: 2),
+                      Text(room.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textSecondary)),
+                    ]),
+                  ),
+                  // Dollar amount + percentage badge + chevron
+                  Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    AnimatedBuilder(
+                      animation: _anim,
+                      builder: (_, __) {
+                        final displayed = widget.result.amount * _anim.value;
+                        return Text(
+                          '\$${displayed.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.w800, color: widget.color,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 4),
+                    Row(mainAxisSize: MainAxisSize.min, children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: widget.color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(pctLabel,
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: widget.color)),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textTertiary),
+                    ]),
+                  ]),
                 ]),
-              ]),
+              ),
             ),
-          ),
-        ]),
+          ]),
+        ),
       ),
     );
   }

@@ -83,33 +83,36 @@ class _Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<_Splash> {
-  bool _precached = false;
+  bool _started = false;
+  bool _splashReady = false; // true once splash images are decoded
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_precached) {
-      _precached = true;
+    if (!_started) {
+      _started = true;
       _precacheAndNavigate();
     }
   }
 
   Future<void> _precacheAndNavigate() async {
-    // Precache ALL images needed before first frame — splash + onboarding heroes.
-    // Uses AppImages.onboardingHeroes so new slides are auto-precached.
-    final imageFutures = [
+    // Phase 1: Decode splash images so the splash screen itself never shows
+    // a checkerboard. This completes before we show any Image.asset widgets.
+    await Future.wait([
       precacheImage(const AssetImage(AppImages.splashBg), context).catchError((_) {}),
       precacheImage(const AssetImage(AppImages.splashLogo), context).catchError((_) {}),
+    ]);
+    if (!mounted) return;
+    setState(() => _splashReady = true);
+
+    // Phase 2: Precache onboarding heroes + minimum display time in parallel.
+    final results = await Future.wait([
       for (final hero in AppImages.onboardingHeroes)
         precacheImage(AssetImage(hero), context).catchError((_) {}),
-    ];
-    final results = await Future.wait([
-      ...imageFutures,
       Future.delayed(const Duration(milliseconds: 600)),
       hasSeenOnboarding(),
     ]);
     if (!mounted) return;
-    // Kick off IAP initialisation in the background — doesn't block navigation.
     context.read<AppState>().initIap();
     final seenOnboarding = false; // TEMP: force onboarding for testing — restore: results.last as bool
     Navigator.of(context).pushReplacement(
@@ -122,20 +125,23 @@ class _SplashState extends State<_Splash> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
+    // Solid colour until splash images are decoded — no checkerboard possible.
+    if (!_splashReady) {
+      return const Scaffold(backgroundColor: AppColors.primaryLight);
+    }
     return Scaffold(
       backgroundColor: AppColors.primaryLight,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Gradient background
           Image.asset(
             AppImages.splashBg,
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.primaryLight),
           ),
-          // Centered content
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
