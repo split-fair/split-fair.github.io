@@ -11,3 +11,7 @@
 
 # Keep Google Play billing classes
 -keep class com.google.android.gms.** { *; }
+
+# Keep Google Play Core / deferred components (R8 missing class fix)
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }

@@ -18,6 +18,16 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
+      - name: Auto-increment build number
+        script: |
+          # Use Codemagic build number to ensure unique builds every time
+          BUILD_NUM=$(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_ID" || echo 0) + 1))
+          # Fallback: use PROJECT_BUILD_NUMBER from Codemagic if ASC fails
+          BUILD_NUM=${BUILD_NUM:-$PROJECT_BUILD_NUMBER}
+          cd $CM_BUILD_DIR
+          CURRENT_VER=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+          sed -i "s/version: .*/version: ${CURRENT_VER}+${BUILD_NUM}/" pubspec.yaml
+          echo "Building version: ${CURRENT_VER}+${BUILD_NUM}"
       - name: Initialize keychain
         script: keychain initialize
       - name: Fetch signing files
@@ -76,6 +86,14 @@ workflows:
         PACKAGE_NAME: "com.splitfair.rent_split"
         KEY_ALIAS: "split-fair"
     scripts:
+      - name: Auto-increment build number
+        script: |
+          # Use Codemagic project build number for unique Android version codes
+          BUILD_NUM=${PROJECT_BUILD_NUMBER:-15}
+          cd $CM_BUILD_DIR
+          CURRENT_VER=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+          sed -i "s/version: .*/version: ${CURRENT_VER}+${BUILD_NUM}/" pubspec.yaml
+          echo "Building version: ${CURRENT_VER}+${BUILD_NUM}"
       - name: Get Flutter packages
         script: flutter packages pub get
       - name: Set up Android keystore
