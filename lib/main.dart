@@ -64,11 +64,12 @@ class _SplashLogo extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(30),
-        child: Image.asset(
-          AppImages.splashLogo,
+        child: Image(
+          image: const AssetImage(AppImages.splashLogo),
           width: 120,
           height: 120,
           fit: BoxFit.cover,
+          gaplessPlayback: true,
           frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
             if (wasSynchronouslyLoaded || frame != null) return child;
             return const Icon(Icons.home_work_rounded, size: 52, color: AppColors.primary);
@@ -101,11 +102,22 @@ class _SplashState extends State<_Splash> {
 
   Future<void> _precacheAndNavigate() async {
     // Phase 1: Decode splash images so the splash screen itself never shows
-    // a checkerboard. This completes before we show any Image.asset widgets.
+    // a checkerboard. Uses exact AssetImage instances matching the Image widgets.
+    // Also resolve() them to force full decode into the image cache.
+    const bgImage = AssetImage(AppImages.splashBg);
+    const logoImage = AssetImage(AppImages.splashLogo);
     await Future.wait([
-      precacheImage(const AssetImage(AppImages.splashBg), context).catchError((_) {}),
-      precacheImage(const AssetImage(AppImages.splashLogo), context).catchError((_) {}),
+      precacheImage(bgImage, context).catchError((_) {}),
+      precacheImage(logoImage, context).catchError((_) {}),
     ]);
+    // Double-check: resolve to ensure the codec is fully warmed
+    if (mounted) {
+      bgImage.resolve(createLocalImageConfiguration(context));
+      logoImage.resolve(createLocalImageConfiguration(context));
+    }
+    if (!mounted) return;
+    // Small delay to let the image cache settle on cold installs
+    await Future.delayed(const Duration(milliseconds: 50));
     if (!mounted) return;
     setState(() => _splashReady = true);
 
@@ -141,9 +153,14 @@ class _SplashState extends State<_Splash> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            AppImages.splashBg,
+          Image(
+            image: const AssetImage(AppImages.splashBg),
             fit: BoxFit.cover,
+            gaplessPlayback: true,
+            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+              if (wasSynchronouslyLoaded || frame != null) return child;
+              return ColoredBox(color: AppColors.primaryLight);
+            },
             errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.primaryLight),
           ),
           Center(
