@@ -1,6 +1,6 @@
 name: rent_split
 description: Fair rent splitting calculator for roommates.
-version: 1.1.0+13
+version: 1.1.1+14
 publish_to: 'none'
 
 environment:

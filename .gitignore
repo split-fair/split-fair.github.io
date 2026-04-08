@@ -62,3 +62,14 @@ certificate_key.pem
 # Stitch design briefs (local reference only)
 STITCH_DESIGN_BRIEF*.md
 STITCH_ONBOARDING_PROMPT.md
+
+# Screenshot automation experiments (local only)
+integration_test/
+test_driver/
+scripts/
+
+# Claude Code config
+.claude/
+
+# Dev binaries
+cloudflared.exe
