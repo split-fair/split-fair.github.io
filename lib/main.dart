@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
+import 'models/ad_service.dart';
 import 'models/app_state.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -14,6 +15,7 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  await AdService.initialize();
   runApp(const SplitFairApp());
 }
 

@@ -15,6 +15,7 @@ import '../widgets/scale_animation.dart';
 import '../widgets/score_breakdown.dart';
 import 'paywall_sheet.dart';
 import 'room_edit_sheet.dart';
+import '../widgets/ad_banner.dart';
 
 class ResultsScreen extends StatefulWidget {
   const ResultsScreen({super.key});
@@ -41,6 +42,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
         children: [
           Scaffold(
             backgroundColor: AppColors.surfaceVariant,
+            bottomNavigationBar: const AdBannerWidget(),
             appBar: AppBar(
               title: const Text('Fair split'),
               actions: [
@@ -152,13 +154,29 @@ class _ResultsScreenState extends State<ResultsScreen> {
           totalRent: state.totalRent,
           address: state.address.isNotEmpty ? state.address : null,
         );
-        await Printing.sharePdf(bytes: bytes, filename: 'split_fair_rent.pdf');
+        if (!context.mounted) return;
+        // Get button position for iPad share sheet anchor
+        final box = context.findRenderObject() as RenderBox?;
+        final rect = box != null
+            ? box.localToGlobal(Offset.zero) & box.size
+            : Rect.fromLTWH(0, 0, 200, 50);
+        await Printing.sharePdf(
+          bytes: bytes,
+          filename: 'split_fair_${DateTime.now().millisecondsSinceEpoch}.pdf',
+          bounds: rect,
+        );
       } catch (e) {
-        messenger.showSnackBar(SnackBar(content: Text('PDF error: $e')));
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('PDF error: $e')));
       }
     } else {
-      showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
-        builder: (_) => ChangeNotifierProvider.value(value: state, child: const PaywallSheet()));
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => ChangeNotifierProvider.value(value: state, child: const PaywallSheet()),
+      );
     }
   }
 }
