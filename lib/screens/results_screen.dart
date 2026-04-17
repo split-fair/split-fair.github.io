@@ -144,38 +144,47 @@ class _ResultsScreenState extends State<ResultsScreen> {
     );
   }
 
+  Future<void> _doGeneratePdf(BuildContext context, AppState state, List<SplitResult> results) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(const SnackBar(content: Text('Generating PDF...')));
+    try {
+      final bytes = await PdfService.generateSplitPdf(
+        results: results,
+        totalRent: state.totalRent,
+        address: state.address.isNotEmpty ? state.address : null,
+      );
+      if (!context.mounted) return;
+      // Get button position for iPad share sheet anchor
+      final box = context.findRenderObject() as RenderBox?;
+      final rect = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : Rect.fromLTWH(0, 0, 200, 50);
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'split_fair_${DateTime.now().millisecondsSinceEpoch}.pdf',
+        bounds: rect,
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('PDF error: $e')));
+    }
+  }
+
   Future<void> _exportPdf(BuildContext context, AppState state, List<SplitResult> results) async {
     if (state.iapUnlocked) {
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.showSnackBar(const SnackBar(content: Text('Generating PDF...')));
-      try {
-        final bytes = await PdfService.generateSplitPdf(
-          results: results,
-          totalRent: state.totalRent,
-          address: state.address.isNotEmpty ? state.address : null,
-        );
-        if (!context.mounted) return;
-        // Get button position for iPad share sheet anchor
-        final box = context.findRenderObject() as RenderBox?;
-        final rect = box != null
-            ? box.localToGlobal(Offset.zero) & box.size
-            : Rect.fromLTWH(0, 0, 200, 50);
-        await Printing.sharePdf(
-          bytes: bytes,
-          filename: 'split_fair_${DateTime.now().millisecondsSinceEpoch}.pdf',
-          bounds: rect,
-        );
-      } catch (e) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('PDF error: $e')));
-      }
+      await _doGeneratePdf(context, state, results);
     } else {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (_) => ChangeNotifierProvider.value(value: state, child: const PaywallSheet()),
+        builder: (_) => ChangeNotifierProvider.value(
+          value: state,
+          child: PaywallSheet(
+            onRewardedUnlock: () => _doGeneratePdf(context, state, results),
+          ),
+        ),
       );
     }
   }
@@ -589,7 +598,7 @@ class _ShareCard extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onExportPdf,
             icon: Icon(isUnlocked ? Icons.picture_as_pdf_rounded : Icons.lock_rounded, size: 18),
-            label: Text(isUnlocked ? 'Export PDF' : 'Export PDF  —  \$1.99'),
+            label: Text(isUnlocked ? 'Export PDF' : 'Export PDF'),
             style: ElevatedButton.styleFrom(minimumSize: const Size(0, 48), backgroundColor: isUnlocked ? AppColors.primary : AppColors.accent, foregroundColor: Colors.white),
           ),
         ),

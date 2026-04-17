@@ -7,7 +7,7 @@ import 'room.dart';
 import 'split_result.dart';
 
 // TODO: set to false before release
-const _kDebugUnlockAll = true;
+const _kDebugUnlockAll = false;
 
 const _kRoomsKey = 'saved_rooms';
 const _kRentKey = 'saved_rent';
