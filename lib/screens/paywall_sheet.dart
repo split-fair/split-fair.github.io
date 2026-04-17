@@ -181,12 +181,12 @@ class _PaywallSheetState extends State<PaywallSheet> {
         ),
         const SizedBox(height: 12),
 
-        // ── Option 3: Remove ALL ads ($3.99) ──────────────────
+        // ── Option 3: Remove ALL ads ($2.99) ──────────────────
         _OptionCard(
           icon: Icons.all_inclusive_rounded,
           iconColor: const Color(0xFF7C3AED),
           title: 'Remove all ads',
-          subtitle: 'No banners, no videos  \$3.99',
+          subtitle: 'No banners, no videos  \$2.99',
           trailing: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF7C3AED), size: 20),
           enabled: true,
           onTap: _purchaseRemoveAds,

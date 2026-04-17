@@ -64,7 +64,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
             child: Padding(
               padding: const EdgeInsets.only(top: 4, bottom: 2),
               child: Text(
-                'Remove ads \$3.99',
+                'Remove ads \$2.99',
                 style: TextStyle(fontSize: 11, color: Colors.grey[500]),
               ),
             ),

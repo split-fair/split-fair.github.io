@@ -5,13 +5,13 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 // ─── Product IDs ─────────────────────────────────────────────────────────────
 // These must match EXACTLY what you create in App Store Connect & Google Play.
 const kProductPdfExport = 'split_fair_pdf_export';     // $1.99 — skip video ad for PDF
-const kProductRemoveAds = 'split_fair_remove_ads';     // $3.99 — remove ALL ads
-const kProductSavedConfigs = 'split_fair_saved_configs'; // $1.99 one-time
+const kProductRemoveAds = 'split_fair_remove_ads';     // $2.99 — remove ALL ads
+const kProductSavedConfigs = kProductPdfExport;         // saved configs bundled with Tier 1
 
 /// Manages all in-app purchase logic for Split Fair.
 ///
 /// Tier 1: PDF Export ($1.99) — removes rewarded video gate, banners stay
-/// Tier 2: Remove All Ads ($3.99) — no banners, no video gate, includes PDF
+/// Tier 2: Remove All Ads ($2.99) — no banners, no video gate, includes PDF
 class IapService extends ChangeNotifier {
   final InAppPurchase _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _sub;
