@@ -721,6 +721,19 @@ class _SettingsTab extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           _SettingsSection(
+            title: 'Purchases',
+            children: [
+              _SettingsTile(
+                icon: Icons.restore_rounded,
+                iconColor: AppColors.primary,
+                title: 'Restore Purchases',
+                subtitle: 'Already purchased? Restore on this device.',
+                onTap: () => _restorePurchases(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _SettingsSection(
             title: 'Data',
             children: [
               _SettingsTile(
@@ -766,6 +779,35 @@ class _SettingsTab extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
         ],
       ),
+    );
+  }
+
+  Future<void> _restorePurchases(BuildContext context) async {
+    final iap = state.iapService;
+    if (!iap.storeAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Store not available. Check your connection.')),
+      );
+      return;
+    }
+    final wasPdf = iap.pdfUnlocked;
+    final wasRemoveAds = iap.removeAdsUnlocked;
+    final wasConfigs = iap.configsUnlocked;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Restoring purchases...')),
+    );
+    await iap.restorePurchases();
+    if (!context.mounted) return;
+
+    final restored = (iap.pdfUnlocked && !wasPdf) ||
+        (iap.removeAdsUnlocked && !wasRemoveAds) ||
+        (iap.configsUnlocked && !wasConfigs);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(restored
+          ? 'Purchases restored successfully.'
+          : 'No previous purchases found for this account.')),
     );
   }
 
