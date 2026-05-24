@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Get Split Fair — free roommate rent splitter</title>
+<meta name="description" content="Download Split Fair on the App Store. Free. No subscription. The fair-rent calculator your group chat needs.">
+<meta name="theme-color" content="#00694C">
+<meta property="og:title" content="Get Split Fair">
+<meta property="og:description" content="Download the free roommate rent splitter on the App Store.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://split-fair.github.io/get/">
+<link rel="canonical" href="https://split-fair.github.io/get/">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2300694C'/><text x='50' y='68' text-anchor='middle' font-size='50' fill='white'>⚖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --emerald: #00694C;
+    --emerald-dark: #004D38;
+    --emerald-soft: #D5EBDF;
+    --emerald-text: #0F5D45;
+    --cream: #F8F6F1;
+    --card: #FFFFFF;
+    --border: #E5E0D8;
+    --ink: #1A1D23;
+    --ink-mute: #6E6F73;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(180deg, var(--emerald) 0%, var(--emerald-dark) 55%, var(--cream) 100%);
+    color: #fff;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 56px 24px 48px;
+    text-align: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  .logo {
+    width: 96px; height: 96px;
+    margin: 0 auto 22px;
+    background: #fff;
+    border-radius: 24px;
+    padding: 8px;
+    box-shadow: 0 18px 60px -20px rgba(0,0,0,0.45);
+  }
+  .logo img { width: 100%; height: 100%; display: block; border-radius: 16px; }
+  .brand {
+    font-weight: 800; font-size: 14px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    opacity: 0.85;
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-weight: 800; font-size: 38px;
+    line-height: 1.08; letter-spacing: -0.025em;
+    color: #fff;
+    margin-bottom: 14px;
+  }
+  h1 .accent { display: inline-block; padding: 0 6px; border-bottom: 4px solid var(--emerald-soft); }
+  .lede {
+    font-size: 17px; line-height: 1.5;
+    color: rgba(255,255,255,0.88);
+    font-weight: 500;
+    margin-bottom: 38px;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  /* Primary CTA — the whole reason this page exists */
+  .cta-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: #1A1D23;
+    color: #fff;
+    padding: 20px 28px;
+    border-radius: 18px;
+    text-decoration: none;
+    box-shadow: 0 16px 40px -12px rgba(0,0,0,0.55);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    width: 100%;
+    max-width: 340px;
+    margin: 0 auto;
+  }
+  .cta-primary:active { transform: scale(0.97); }
+  .cta-primary .apple {
+    font-size: 30px; line-height: 1;
+  }
+  .cta-primary .stack {
+    display: flex; flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.05;
+    text-align: left;
+  }
+  .cta-primary .lbl-tiny {
+    font-size: 12px; opacity: 0.78;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .cta-primary .lbl-big {
+    font-weight: 700; font-size: 22px;
+  }
+  .android-note {
+    margin-top: 16px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.62);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .price-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto 28px;
+    padding: 8px 16px;
+    background: rgba(213,235,223,0.18);
+    border: 1px solid rgba(213,235,223,0.55);
+    border-radius: 100px;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--emerald-soft);
+  }
+  /* Secondary links — show below the fold */
+  .more {
+    margin-top: auto;
+    padding-top: 56px;
+  }
+  .more h2 {
+    font-weight: 700; font-size: 13px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 18px;
+  }
+  .link-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .link-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #fff;
+    text-decoration: none;
+    padding: 16px 20px;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 16px;
+    transition: background 0.18s ease;
+  }
+  .link-row:active { background: rgba(255,255,255,0.15); }
+  .link-row .arrow { opacity: 0.55; font-weight: 700; }
+  .foot {
+    margin-top: 36px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+  }
+  .foot a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    opacity: 0.85;
+  }
+
+  /* Small phones */
+  @media (max-width: 360px) {
+    h1 { font-size: 32px; }
+    .lede { font-size: 16px; }
+    .cta-primary .lbl-big { font-size: 20px; }
+  }
+
+  /* Larger / desktop preview */
+  @media (min-width: 640px) {
+    .wrap { padding-top: 80px; max-width: 520px; }
+    h1 { font-size: 44px; }
+    .lede { font-size: 18px; max-width: 420px; }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .cta-primary { transition: none; }
+  }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="logo">
+      <img src="../images/splitfair_icon.png" alt="Split Fair" onerror="this.style.display='none'">
+    </div>
+    <div class="brand">Split Fair</div>
+    <span class="price-pill">Free · No subscription</span>
+    <h1>Settle the rent fight<br>for <span class="accent">$0.</span></h1>
+    <p class="lede">Score every room. Split by what it's actually worth. Done in 30 seconds.</p>
+
+    <a class="cta-primary"
+       href="https://apps.apple.com/app/id6761033612"
+       target="_blank" rel="noopener"
+       aria-label="Download Split Fair on the App Store">
+      <span class="apple" aria-hidden="true">🍎</span>
+      <span class="stack">
+        <span class="lbl-tiny">Download on the</span>
+        <span class="lbl-big">App Store</span>
+      </span>
+    </a>
+    <div class="android-note">Android · coming soon</div>
+
+    <section class="more">
+      <h2>More</h2>
+      <div class="link-grid">
+        <a class="link-row" href="https://www.instagram.com/splitfair_app/" target="_blank" rel="noopener">
+          <span>Instagram · @splitfair_app</span><span class="arrow">↗</span>
+        </a>
+        <a class="link-row" href="https://www.tiktok.com/@splitfair_app" target="_blank" rel="noopener">
+          <span>TikTok · @splitfair_app</span><span class="arrow">↗</span>
+        </a>
+        <a class="link-row" href="https://split-fair.github.io/" target="_blank" rel="noopener">
+          <span>About the app</span><span class="arrow">↗</span>
+        </a>
+        <a class="link-row" href="https://split-fair.github.io/privacy-policy/" target="_blank" rel="noopener">
+          <span>Privacy policy</span><span class="arrow">↗</span>
+        </a>
+      </div>
+      <div class="foot">
+        © 2026 Split Fair · <a href="mailto:hello@split-fair.app">hello@split-fair.app</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
