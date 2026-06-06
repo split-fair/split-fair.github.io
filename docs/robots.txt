@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://split-fair.github.io/sitemap.xml
