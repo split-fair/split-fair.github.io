@@ -60,13 +60,18 @@ Implemented on `docs/index.html` and `docs/get/index.html`:
 
 Most of your installs will come from **App Store search**, not Google. Tune the listing:
 
-- **Keyword field (100 chars, no spaces after commas):**
-  `splitfare,rent split,roommate,fair rent,rent calculator,split rent,room rent,bill split,roomies`
-  — note `splitfare` (one word) is included; Apple does fuzzy matching on the homophone, and the
-  one-word form fits where "split fare" with a space wastes a char Apple already indexes from title.
-- **Title (30 chars):** `Split Fair: Rent Splitter` (brand + top keyword).
-- **Subtitle (30 chars):** `Fair rent by room · Split Fare` — putting the homophone in the
-  subtitle is the single highest-impact ASO move for the misspelling.
+- **Keyword field (100 chars, no spaces after commas) — ⚠️ LOCKED until next app version.**
+  Keywords can only change with a NEW app version (build + review); they're read-only on a released
+  version. Current live value (99/100, full):
+  `splitfair,splitwise,splitrent,housemate,sublet,lease,move,divide,settle,landlord,bills,budget,share`
+  **>>> ON THE NEXT VERSION BUMP (Codemagic build), paste this exact string <<<** — swaps out
+  `move`+`settle`, adds `splitfare` for the homophone (97/100):
+  `splitfair,splitfare,splitwise,splitrent,housemate,sublet,lease,divide,landlord,bills,budget,share`
+  Edit at: App Store Connect → app → [new version] → Keywords. (Decision 2026-06-06: ride next
+  version, don't create a standalone version just for this.)
+- **App name (live):** `Split Fair: Roommate Rent` — already indexes split/fair/roommate/rent. Do
+  NOT change the name (user decision). The homophone "fare" is captured via the keyword field above.
+- **Subtitle (live):** `Score every bedroom. Pay fair.` — leave as-is (user wants visible copy unchanged).
 - **Ratings velocity:** the in-app review prompt (v1.1.9) is live — keep it. Reviews are the
   biggest ranking factor after keywords.
 
