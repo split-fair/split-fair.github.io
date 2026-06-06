@@ -117,6 +117,54 @@ Captures people Googling the problem who aren't in the App Store yet. Sends them
 - **Budget:** $10–15/day. Expect higher CPA than ASA (extra hop to store) — but it's the only
   channel that catches pre-store web searchers and seeds Android demand.
 
+### 3d. Paid Social — your demand engine (leverages accounts you ALREADY have)
+ASA only catches people already searching. Paid social *creates* the searchers. And you don't build
+ads from scratch — you promote your existing organic posts, which is cheaper and higher-trust.
+
+- **TikTok Spark Ads (start here for social).** Boost an existing @splitfair_app post *as itself* —
+  keeps the handle, likes, comments, sounds native. Objective: **App Promotion** (iOS installs) or
+  **Traffic** → split-fair.github.io/get. Pick your best-performing organic video and put $5–10/day
+  behind it. TikTok is where this app's audience (18–28, moving season) already is.
+- **Meta Ads — Instagram + Facebook (one Ads Manager).** **Advantage+ App Campaign** optimized for
+  installs, creative = your existing Reels. Bonus: retarget IG profile/website visitors and build
+  lookalikes from engagers. $5–10/day.
+- **Reddit Ads.** You have an account and the subs are perfect (r/roommates, city apartment subs).
+  Cheap CPMs, niche intent. $3–5/day, "Get app installs" or "Drive traffic" to /get.
+
+**Why this pairs with ASA:** social = top-of-funnel awareness (people see "Split Fair" spelled
+correctly in a video → fewer "split fare" mistypes); ASA + SEO = bottom-of-funnel capture. Run both.
+
+**Revised lean recommendation (given you have organic accounts + creative):** instead of ASA-only,
+a stronger ~$15–20/day lean start is **TikTok Spark Ads $8 + ASA brand-defense $7**. The Spark ad
+generates demand using a video you already have; ASA defends the name and catches the intent. Add
+Meta + Reddit as budget grows.
+
+#### >>> CHOSEN LAUNCH: TikTok Spark Ads only, ~$10/day <<<
+One channel, one validated video, optimized for installs. Prove it converts, then layer ASA + Meta.
+
+**Step by step:**
+1. **Business account:** convert @splitfair_app to a TikTok Business Account (Settings → Account →
+   Switch to Business), then create a **TikTok Ads Manager** account at ads.tiktok.com + add billing.
+2. **Pick the video:** use your best-performing organic post (highest watch-through / saves). If
+   none stand out yet, post the "It's Split FAIR, not Split Fare 😅" hook video and boost that.
+3. **Authorize it as a Spark Ad:** on the organic post → ⋯ → **Ad settings / Ad authorization** →
+   toggle ON → generate the video code (or authorize via Ads Manager → Assets → Spark Ads).
+4. **Campaign:**
+   - Objective: **Traffic** (simplest — send to the App Store link, optimize for clicks) **or**
+     **App Promotion** (optimizes for installs via SKAN 4.0; needs the app added + a bit more setup).
+     Start with Traffic for a clean $10/day test; switch to App Promotion once you want install-cost data.
+   - Destination URL: `https://apps.apple.com/app/id6761033612` (direct) or
+     `https://split-fair.github.io/get` (lets you also track the click via GA4 later).
+   - Budget: **$10/day**, no end date.
+5. **Targeting:** US, ages 18–34, broad interests (Lifestyle, Personal Finance, Real Estate/Renting).
+   Let TikTok's algorithm optimize — don't over-narrow at $10/day.
+6. **Ad:** select the Spark post, set the CTA button to **"Download"**, point to the destination URL.
+7. **Run 7 days untouched.** Then read: CPC, landing-page/store taps, and (if App Promotion) cost
+   per install. Kill or scale. If it works, add ASA brand-defense ($5–7/day) underneath.
+
+**Blocked on you:** TikTok Business + Ads Manager account & billing; choosing/authorizing the video.
+Everything else (copy, targeting, destination) is specified above.
+
 ### Conversion tracking (do before spending)
 - ASA: built-in (App Store install attribution).
 - Google App campaign: link **App Store Connect** + use Google's iOS install measurement (SKAdNetwork).
