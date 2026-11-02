@@ -30,7 +30,12 @@ workflows:
           keychain add-certificates
           xcode-project use-profiles
       - name: Get Flutter packages
-        script: flutter packages pub get
+        # 2026-11-02: newer stable Flutter enables Swift Package Manager by default; google_mobile_ads is
+        # CocoaPods-only, so pod install fails with a "dependency conflict". Turn SPM off for this build
+        # (Flutter's documented workaround) until google_mobile_ads ships SPM support.
+        script: |
+          flutter config --no-enable-swift-package-manager
+          flutter packages pub get
       - name: Build IPA (build number above anything ASC has seen)
         script: |
           set -e
