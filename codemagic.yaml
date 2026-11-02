@@ -1,4 +1,71 @@
 workflows:
+  # Manual / API-triggered: build, upload, set App Store metadata, submit for review.
+  # Trigger: POST https://api.codemagic.io/builds {"appId":..., "workflowId":"ios-app-store", "branch":"main"}
+  ios-app-store:
+    name: Split Fair — iOS App Store release
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Codemagic
+    environment:
+      groups:
+        - ios-signing
+      vars:
+        BUNDLE_ID: "com.splitfair.rentSplit"
+        APP_STORE_APPLE_ID: "6761033612"
+        ASO_KEYWORDS: "splitfair,splitfare,splitwise,splitrent,housemate,sublet,lease,divide,landlord,bills,budget,share"
+        WHATS_NEW: "Performance improvements and bug fixes. Thanks for using Split Fair!"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Set up code signing
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Get Flutter packages
+        script: flutter packages pub get
+      - name: Build IPA (build number above anything ASC has seen)
+        script: |
+          set -e
+          TF=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null | tail -n1 | tr -dc '0-9')
+          AS=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" 2>/dev/null | tail -n1 | tr -dc '0-9')
+          PUB=$(grep '^version:' pubspec.yaml | cut -d'+' -f2 | tr -dc '0-9')
+          MAX=0
+          for n in "$TF" "$AS" "$PUB"; do
+            if [ -n "$n" ] && [ "$n" -gt "$MAX" ]; then MAX=$n; fi
+          done
+          BUILD_NUM=$((MAX + 1))
+          echo "Latest TestFlight=$TF AppStore=$AS pubspec=$PUB -> building $BUILD_NUM"
+          flutter build ipa --release \
+            --build-number=$BUILD_NUM \
+            --export-options-plist=/Users/builder/export_options.plist
+      - name: Upload, set keywords + What's New, submit for App Store review
+        script: |
+          set -e
+          app-store-connect publish \
+            --path "build/ios/ipa/*.ipa" \
+            --app-store \
+            --release-type AFTER_APPROVAL \
+            --keywords "$ASO_KEYWORDS" \
+            --whats-new "$WHATS_NEW" \
+            --max-build-processing-wait 60
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - clairmont425@gmail.com
+        notify:
+          success: true
+          failure: true
+
   ios-testflight:
     name: Split Fair — iOS TestFlight
     max_build_duration: 60
