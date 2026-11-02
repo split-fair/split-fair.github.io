@@ -21,6 +21,7 @@ workflows:
     scripts:
       - name: Set up code signing
         script: |
+          set -e  # fail here (not later at build) if ASC API rejects the key, e.g. 403 agreement expired
           keychain initialize
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
